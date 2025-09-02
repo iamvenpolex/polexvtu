@@ -43,7 +43,7 @@ export default function Contact() {
             <Phone className="w-6 h-6 text-orange-500" />
             <div>
               <p className="font-semibold text-gray-900">Phone</p>
-              <p className="text-gray-600">+234 803 264 8367</p>
+              <p className="text-gray-600">+234 803 264 8367 (whatsapp only)</p>
             </div>
           </div>
 
@@ -59,7 +59,10 @@ export default function Contact() {
             <MapPin className="w-6 h-6 text-orange-500" />
             <div>
               <p className="font-semibold text-gray-900">Office</p>
-              <p className="text-gray-600">Lagos, Nigeria</p>
+              <p className="text-gray-600">
+                24, Red Block street, Behind University of Ibadan, Ibadan. Oyo
+                State. Nigeria.
+              </p>
             </div>
           </div>
         </motion.div>

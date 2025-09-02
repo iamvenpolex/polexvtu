@@ -87,8 +87,10 @@ export default function About() {
           <h3 className="text-xl font-semibold mb-2 text-gray-900">Our Team</h3>
           <p className="text-gray-600">
             Built by passionate innovators at{" "}
-            <span className="font-semibold text-orange-500">MIPI TECH</span>,
-            focused on giving you secure, user-friendly, and reliable
+            <a href="https://www.mipitech.com.ng">
+              <span className="font-semibold text-orange-500">MIPI TECH</span>
+            </a>
+            , focused on giving you secure, user-friendly, and reliable
             experiences.
           </p>
         </motion.div>

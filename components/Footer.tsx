@@ -63,7 +63,7 @@ export default function Footer() {
             <Mail size={16} /> support@mipitech.com.ng
           </p>
           <p className="flex items-center gap-2 mb-4">
-            <Phone size={16} /> +234 803 264 8367
+            <Phone size={16} /> +234 803 264 8367 (whatsapp only)
           </p>
           <div className="flex gap-4 mt-2">
             <a href="#" className="hover:text-orange-500">

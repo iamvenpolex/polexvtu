@@ -16,16 +16,16 @@ export default function FAQ() {
       a: "1. Register an account. 2. Fund your wallet. 3. Select a service (Data, Airtime, Bills, etc.) and pay instantly.",
     },
     {
-      q: "How much can I trust Easy Access?",
-      a: "TapAm (Easy Access) is a secure and reliable platform trusted by many users nationwide. Your transactions and data are safe with us.",
+      q: "How much can I trust TapAm?",
+      a: "TapAm  is a secure and reliable platform trusted by many users nationwide. Your transactions and data are safe with us.",
     },
     {
-      q: "How do I fund my Easy Access wallet?",
+      q: "How do I fund my  TapAm wallet?",
       a: "You can fund your wallet through bank transfer or other payment methods available on your dashboard.",
     },
     {
       q: "Your question is not covered under this page?",
-      a: "Please reach out via our contact page or email support@tapam.com and we’ll be glad to assist.",
+      a: "Please reach out via our contact page or email support@mipitech.com.ng and we’ll be glad to assist.",
     },
   ];
 
