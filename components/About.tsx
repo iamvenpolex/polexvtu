@@ -1,7 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Users, Target, Shield } from "lucide-react";
+import { Users, Target, Shield, Star } from "lucide-react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Pagination, Autoplay, Navigation } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/pagination";
+import "swiper/css/navigation";
 
 export default function About() {
   return (
@@ -86,6 +91,97 @@ export default function About() {
             focused on giving you secure, user-friendly, and reliable
             experiences.
           </p>
+        </motion.div>
+      </div>
+
+      {/* Testimonials Carousel */}
+      <div className="max-w-6xl mx-auto mt-20 text-center">
+        {/* Section Heading */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <h3 className="text-orange-500 font-semibold uppercase tracking-wide text-sm sm:text-base">
+            Testimonial
+          </h3>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-blue-900 mt-2">
+            What Our Customers Say
+          </h2>
+          <div className="w-12 h-1 bg-orange-500 mx-auto mt-3 rounded-full"></div>
+        </motion.div>
+
+        <Swiper
+          modules={[Pagination, Autoplay, Navigation]}
+          spaceBetween={30}
+          slidesPerView={1}
+          loop={true}
+          autoplay={{ delay: 4000, disableOnInteraction: false }}
+          pagination={{ clickable: true }}
+          navigation
+          className="mt-12"
+        >
+          {/* Testimonial 1 */}
+          <SwiperSlide>
+            <div className="bg-gray-50 p-8 rounded-2xl shadow-md max-w-xl mx-auto">
+              <Star className="w-8 h-8 text-yellow-400 mx-auto mb-4" />
+              <p className="text-gray-600 italic">
+                “TapAm makes paying for data and electricity so easy. I save
+                time and stress every day!”
+              </p>
+              <h4 className="mt-4 font-semibold text-gray-900">— Adebayo S.</h4>
+            </div>
+          </SwiperSlide>
+
+          {/* Testimonial 2 */}
+          <SwiperSlide>
+            <div className="bg-gray-50 p-8 rounded-2xl shadow-md max-w-xl mx-auto">
+              <Star className="w-8 h-8 text-yellow-400 mx-auto mb-4" />
+              <p className="text-gray-600 italic">
+                “Reliable, fast, and affordable. TapAm has become my go-to app
+                for all bills.”
+              </p>
+              <h4 className="mt-4 font-semibold text-gray-900">
+                — Chinenye K.
+              </h4>
+            </div>
+          </SwiperSlide>
+
+          {/* Testimonial 3 */}
+          <SwiperSlide>
+            <div className="bg-gray-50 p-8 rounded-2xl shadow-md max-w-xl mx-auto">
+              <Star className="w-8 h-8 text-yellow-400 mx-auto mb-4" />
+              <p className="text-gray-600 italic">
+                “I love the smooth experience. TapAm is secure and trustworthy —
+                highly recommend!”
+              </p>
+              <h4 className="mt-4 font-semibold text-gray-900">— Musa A.</h4>
+            </div>
+          </SwiperSlide>
+        </Swiper>
+      </div>
+
+      {/* CTA Section */}
+      <div className="bg-gradient-to-r from-blue-900 to-orange-500 py-16 mt-20">
+        <motion.div
+          className="max-w-4xl mx-auto text-center px-6"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
+            Ready to Experience Seamless Payments?
+          </h2>
+          <p className="mt-4 text-lg text-gray-200">
+            Join thousands of Nigerians already enjoying fast, secure, and
+            reliable transactions.
+          </p>
+          <a
+            href="/login"
+            className="inline-block mt-8 px-8 py-4 bg-white text-blue-900 font-semibold rounded-full shadow-lg hover:bg-gray-100 transition duration-300"
+          >
+            Get Started
+          </a>
         </motion.div>
       </div>
     </section>
