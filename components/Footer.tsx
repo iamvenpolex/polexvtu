@@ -60,10 +60,10 @@ export default function Footer() {
         <div>
           <h3 className="text-xl font-semibold mb-3">Contact Us</h3>
           <p className="flex items-center gap-2 mb-2">
-            <Mail size={16} /> support@tapam.com
+            <Mail size={16} /> support@mipitech.com.ng
           </p>
           <p className="flex items-center gap-2 mb-4">
-            <Phone size={16} /> +234 800 123 4567
+            <Phone size={16} /> +234 803 264 8367
           </p>
           <div className="flex gap-4 mt-2">
             <a href="#" className="hover:text-orange-500">

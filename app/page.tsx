@@ -21,7 +21,7 @@ export default function Home() {
         className="relative flex flex-col items-start justify-center px-6 sm:px-10 py-20 min-h-screen text-white"
       >
         {/* Background Image */}
-        <div className="absolute inset-0 bg-[url('/premium_photo-1661422091340-b52115cd93a8.avif')] bg-cover bg-center -z-20"></div>
+        <div className="absolute inset-0 bg-[url('/home-bg.jpg')] bg-cover bg-center -z-20"></div>
 
         {/* Dark Overlay */}
         <div className="absolute inset-0 bg-black/50 -z-10"></div>

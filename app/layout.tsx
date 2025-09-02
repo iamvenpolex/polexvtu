@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
+import PageLoader from "@/components/PageLoader"; // 👈 import
 
 // Load Poppins
 const poppins = Poppins({
@@ -20,7 +21,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${poppins.className} antialiased`}>{children}</body>
+      <body className={`${poppins.className} antialiased`}>
+        <PageLoader>{children}</PageLoader> {/* 👈 wrap children */}
+      </body>
     </html>
   );
 }

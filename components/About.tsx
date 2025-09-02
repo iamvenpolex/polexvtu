@@ -162,9 +162,15 @@ export default function About() {
       </div>
 
       {/* CTA Section */}
-      <div className="bg-gradient-to-r from-blue-900 to-orange-500 py-16 mt-20">
+      <div
+        className="relative w-full bg-fixed bg-center bg-cover py-24 mt-20"
+        style={{ backgroundImage: "url('/cta-bg.avif')" }} // 👈 replace with your image path
+      >
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-black/60"></div>
+
         <motion.div
-          className="max-w-4xl mx-auto text-center px-6"
+          className="relative max-w-4xl mx-auto text-center px-6"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -178,7 +184,7 @@ export default function About() {
           </p>
           <a
             href="/login"
-            className="inline-block mt-8 px-8 py-4 bg-white text-blue-900 font-semibold rounded-full shadow-lg hover:bg-gray-100 transition duration-300"
+            className="inline-block mt-8 px-10 py-4 bg-orange-500 text-white font-semibold rounded-full shadow-lg hover:bg-orange-600 transition duration-300"
           >
             Get Started
           </a>
