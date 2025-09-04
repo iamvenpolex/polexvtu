@@ -166,7 +166,7 @@ export default function About() {
       {/* CTA Section */}
       <div
         className="relative w-full bg-fixed bg-center bg-cover py-24 mt-20"
-        style={{ backgroundImage: "url('/cta-bg.avif')" }} // 👈 replace with your image path
+        style={{ backgroundImage: "url('/cta-bg.jpg')" }} // 👈 replace with your image path
       >
         {/* Overlay */}
         <div className="absolute inset-0 bg-black/60"></div>
