@@ -21,25 +21,26 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 w-full bg-white shadow px-6 py-4 flex items-center justify-between z-50">
+      <nav className="fixed top-0 left-0 w-full bg-white shadow px-4 sm:px-6 py-4 flex items-center justify-between z-50">
         {/* Logo / Brand */}
-        <Link href="/dashboard" className="text-xl font-bold text-blue-600">
-          TapAm
+        <Link href="/" className="text-xl font-bold flex items-center">
+          <span className="text-orange-500">Tap</span>
+          <span className="text-gray-800">Am</span>
         </Link>
 
         {/* Right side actions */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4 sm:gap-6">
           {/* Support */}
           <Link
             href="/dashboard/support"
-            className="flex items-center gap-2 text-gray-600 hover:text-blue-600"
+            className="flex items-center gap-2 text-gray-600 hover:text-orange-500"
           >
             <HelpCircle size={22} />
             <span className="hidden sm:inline">Support</span>
           </Link>
 
           {/* Notifications */}
-          <button className="relative text-gray-600 hover:text-blue-600">
+          <button className="relative text-gray-600 hover:text-orange-500">
             <Bell size={22} />
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1 rounded-full">
               5
@@ -50,7 +51,7 @@ export default function Navbar() {
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setShowProfileMenu(!showProfileMenu)}
-              className="flex items-center gap-2 text-gray-700 hover:text-blue-600"
+              className="flex items-center gap-2 text-gray-700 hover:text-orange-500"
             >
               <User size={22} />
               <span className="hidden sm:inline">Profile</span>
