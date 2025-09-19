@@ -13,7 +13,7 @@ export interface UserTransaction {
 }
 
 interface TransactionTableProps {
-  transactions: UserTransaction[];
+  transactions?: UserTransaction[]; // ✅ optional now
   currentPage: number;
   transactionsPerPage: number;
   totalPages: number;
@@ -22,7 +22,7 @@ interface TransactionTableProps {
 }
 
 export default function TransactionTable({
-  transactions,
+  transactions = [], // ✅ default to empty array
   currentPage,
   transactionsPerPage,
   totalPages,
@@ -31,6 +31,8 @@ export default function TransactionTable({
 }: TransactionTableProps) {
   const indexOfLastTx = currentPage * transactionsPerPage;
   const indexOfFirstTx = indexOfLastTx - transactionsPerPage;
+
+  // ✅ safe slice
   const currentTransactions = transactions.slice(indexOfFirstTx, indexOfLastTx);
 
   const getStatusColor = (status: string) => {
@@ -47,8 +49,10 @@ export default function TransactionTable({
   };
 
   const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    alert(`Copied: ${text}`);
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      alert(`Copied: ${text}`);
+    }
   };
 
   return (
