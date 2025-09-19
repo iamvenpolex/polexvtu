@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import {
   Wifi,
   Phone,
@@ -16,57 +17,101 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+interface User {
+  balance: number;
+  reward: number;
+}
+
 export default function DashboardPage() {
   const [showBalance, setShowBalance] = useState(true);
   const [showReward, setShowReward] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [firstName, setFirstName] = useState("");
 
-  const user = {
-    name: "Ayomiposi Adejorin",
-    balance: 120500,
-    reward: 2500,
-  };
+  useEffect(() => {
+    const storedName = localStorage.getItem("firstName") || "User";
+    setFirstName(storedName);
+
+    const fetchUserData = async () => {
+      try {
+        const token = localStorage.getItem("token"); // if using JWT auth
+        const response = await axios.get(
+          "http://localhost:5000/api/user/profile",
+          {
+            headers: {
+              Authorization: token ? `Bearer ${token}` : "",
+            },
+          }
+        );
+        setUser(response.data);
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err)) {
+          setError(err.response?.data?.message || "Failed to fetch data");
+        } else if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("Something went wrong");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-100 p-3 sm:p-6">
-      {/* Slightly reduced width on large screens */}
       <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
         {/* Wallet Dashboard */}
         <div className="bg-white rounded-xl shadow-md p-3 sm:p-6">
           <div className="flex items-center justify-between">
             <h1 className="text-base sm:text-xl font-semibold text-orange-600">
-              Hi, {user.name.split(" ")[0]} 👋
+              Hi, {firstName} 👋
             </h1>
           </div>
 
-          {/* Wallet Balance */}
-          <div className="mt-3 flex items-center justify-between">
-            <div>
-              <p className="text-gray-500 text-xs sm:text-sm">Wallet Balance</p>
-              <h2 className="text-xl sm:text-3xl font-bold text-gray-800 flex items-center gap-2">
-                {showBalance ? `₦${user.balance.toLocaleString()}` : "****"}
-                <button
-                  onClick={() => setShowBalance(!showBalance)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  {showBalance ? <Eye size={16} /> : <EyeOff size={16} />}
-                </button>
-              </h2>
-            </div>
+          {loading && (
+            <p className="mt-3 text-gray-500">Loading wallet info...</p>
+          )}
+          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
 
-            <div className="text-right">
-              <p className="text-gray-500 text-xs sm:text-sm">Reward Balance</p>
-              <div className="flex items-center gap-2 text-green-600 font-semibold text-sm sm:text-base">
-                {showReward ? `₦${user.reward.toLocaleString()}` : "****"}
-                <button
-                  onClick={() => setShowReward(!showReward)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  {showReward ? <Eye size={16} /> : <EyeOff size={16} />}
-                </button>
-                <Gift size={16} />
+          {user && !loading && (
+            <div className="mt-3 flex items-center justify-between">
+              <div>
+                <p className="text-gray-500 text-xs sm:text-sm">
+                  Wallet Balance
+                </p>
+                <h2 className="text-xl sm:text-3xl font-bold text-gray-800 flex items-center gap-2">
+                  {showBalance ? `₦${user.balance.toLocaleString()}` : "****"}
+                  <button
+                    onClick={() => setShowBalance(!showBalance)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    {showBalance ? <Eye size={16} /> : <EyeOff size={16} />}
+                  </button>
+                </h2>
+              </div>
+
+              <div className="text-right">
+                <p className="text-gray-500 text-xs sm:text-sm">
+                  Reward Balance
+                </p>
+                <div className="flex items-center gap-2 text-green-600 font-semibold text-sm sm:text-base">
+                  {showReward ? `₦${user.reward.toLocaleString()}` : "****"}
+                  <button
+                    onClick={() => setShowReward(!showReward)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    {showReward ? <Eye size={16} /> : <EyeOff size={16} />}
+                  </button>
+                  <Gift size={16} />
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Updates Section */}
@@ -109,7 +154,6 @@ export default function DashboardPage() {
               <Phone className="w-5 h-5 sm:w-6 sm:h-6" />
               Airtime
             </Link>
-
             <Link
               href="/dashboard/data"
               className="flex flex-col items-center gap-1 sm:gap-2 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow transition text-xs sm:text-sm"
@@ -117,7 +161,6 @@ export default function DashboardPage() {
               <Wifi className="w-5 h-5 sm:w-6 sm:h-6" />
               Data
             </Link>
-
             <Link
               href="/dashboard/electricity"
               className="flex flex-col items-center gap-1 sm:gap-2 bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow transition text-xs sm:text-sm"
@@ -125,7 +168,6 @@ export default function DashboardPage() {
               <Lightbulb className="w-5 h-5 sm:w-6 sm:h-6" />
               Electricity
             </Link>
-
             <Link
               href="/dashboard/education"
               className="flex flex-col items-center gap-1 sm:gap-2 bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow transition text-xs sm:text-sm"
@@ -133,7 +175,6 @@ export default function DashboardPage() {
               <GraduationCap className="w-5 h-5 sm:w-6 sm:h-6" />
               Education
             </Link>
-
             <Link
               href="/dashboard/cabletv"
               className="flex flex-col items-center gap-1 sm:gap-2 bg-pink-500 hover:bg-pink-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow transition text-xs sm:text-sm"
@@ -141,7 +182,6 @@ export default function DashboardPage() {
               <Tv className="w-5 h-5 sm:w-6 sm:h-6" />
               Cable TV
             </Link>
-
             <Link
               href="/dashboard/betting"
               className="flex flex-col items-center gap-1 sm:gap-2 bg-green-500 hover:bg-green-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow transition text-xs sm:text-sm"

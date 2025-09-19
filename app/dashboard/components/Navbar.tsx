@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Bell, User, LogOut, HelpCircle, Settings } from "lucide-react";
 import Link from "next/link";
+import ComingSoonTag from "@/components/ComingSoonTag";
 
 export default function Navbar() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -18,6 +19,13 @@ export default function Navbar() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("firstName");
+    localStorage.removeItem("email");
+    window.location.href = "/login";
+  };
 
   return (
     <>
@@ -71,11 +79,17 @@ export default function Navbar() {
                   href="/dashboard/settings"
                   className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
                 >
-                  <Settings size={18} />
-                  Account Settings
+                  <Settings size={18} className="flex-shrink-0" />
+                  <span className="flex items-center gap-2">
+                    Account Settings
+                    <ComingSoonTag size="sm" />
+                  </span>
                 </Link>
 
-                <button className="flex items-center gap-2 px-3 py-2 w-full text-left text-red-600 hover:bg-gray-100 rounded">
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-3 py-2 w-full text-left text-red-600 hover:bg-gray-100 rounded"
+                >
                   <LogOut size={18} />
                   Logout
                 </button>

@@ -3,35 +3,56 @@
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import Loader from "@/components/Loader"; // 👈 import loader
+import Loader from "@/components/Loader";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
 
-    // simulate API request (replace with real login logic)
-    setTimeout(() => {
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifier, password }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Login failed");
+
+      // Store token and user info
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("firstName", data.firstName);
+      localStorage.setItem("email", data.email); // ✅ store email for wallet funding
+
+      // Redirect to dashboard
+      window.location.href = "/dashboard";
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Something went wrong");
+      }
+    } finally {
       setLoading(false);
-      console.log("Login submitted ✅");
-      // router.push("/dashboard") if you want
-    }, 2000);
+    }
   };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 relative">
-      {/* Loader */}
       {loading && <Loader />}
 
-      {/* Navbar */}
       <Navbar />
 
-      {/* Hero Section */}
       <div className="relative w-full flex-1 bg-[url('/home-bg.jpg')] bg-cover bg-center bg-fixed">
         <div className="absolute inset-0 bg-black/50"></div>
 
@@ -47,13 +68,15 @@ export default function LoginPage() {
             </h1>
 
             <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-              {/* Email */}
+              {/* Email or Phone */}
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
-                  type="email"
-                  name="email"
-                  placeholder="Email"
+                  type="text"
+                  name="identifier"
+                  placeholder="Email or Phone"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   required
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-gray-900 placeholder:text-gray-400"
                 />
@@ -66,6 +89,8 @@ export default function LoginPage() {
                   type={showPassword ? "text" : "password"}
                   name="password"
                   placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                   className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 text-gray-900 placeholder:text-gray-400"
                 />
@@ -78,7 +103,10 @@ export default function LoginPage() {
                 </button>
               </div>
 
-              {/* Submit */}
+              {/* Error message */}
+              {error && <p className="text-red-500 text-sm">{error}</p>}
+
+              {/* Submit button */}
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}

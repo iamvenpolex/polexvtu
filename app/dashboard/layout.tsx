@@ -2,6 +2,7 @@
 
 import { ReactNode } from "react";
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
@@ -11,6 +12,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
       {/* Page Content */}
       <main className="flex-1 p-6">{children}</main>
+      <Footer />
     </div>
   );
 }
