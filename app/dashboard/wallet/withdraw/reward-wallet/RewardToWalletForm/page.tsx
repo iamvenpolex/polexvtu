@@ -6,7 +6,7 @@ interface Props {
   handleSubmit: () => void;
   loading: boolean;
   message: string;
-  rewardBalance: number;
+  rewardBalance?: number; // ✅ optional now
 }
 
 export default function RewardToWalletForm({
@@ -15,7 +15,7 @@ export default function RewardToWalletForm({
   handleSubmit,
   loading,
   message,
-  rewardBalance,
+  rewardBalance = 0, // ✅ default to 0 if undefined
 }: Props) {
   const inputClasses =
     "w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-orange-400 text-gray-900";
