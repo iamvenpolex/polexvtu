@@ -9,7 +9,7 @@ interface Props {
   handleSubmit: () => void;
   loading: boolean;
   message: string;
-  walletBalance: number;
+  walletBalance?: number; // ✅ optional now
 }
 
 export default function WalletToTapamForm({
@@ -21,7 +21,7 @@ export default function WalletToTapamForm({
   handleSubmit,
   loading,
   message,
-  walletBalance,
+  walletBalance = 0, // ✅ default to 0
 }: Props) {
   const inputClasses =
     "w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-orange-400 text-gray-900";
