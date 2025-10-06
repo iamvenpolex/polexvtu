@@ -3,7 +3,14 @@
 import { useState } from "react";
 import api from "@/lib/api";
 
-interface ApiErrorResponse {
+// Type for the successful fund response
+interface FundResponse {
+  authorization_url: string;
+  reference: string;
+}
+
+// Type for Axios error response
+interface AxiosErrorResponse {
   response?: {
     data?: {
       message?: string;
@@ -31,23 +38,25 @@ export default function FundWalletPage() {
     }
 
     setLoading(true);
+
     try {
-      const { data } = await api.post<{ authorization_url: string; reference: string }>(
-        "/wallet/fund",
-        { amount, email }
-      );
+      const { data } = await api.post<FundResponse>("/wallet/fund", {
+        amount,
+        email,
+      });
 
       window.location.href = data.authorization_url;
     } catch (err: unknown) {
-      // Type-safe handling of axios errors
-      const axiosErr = err as ApiErrorResponse;
-
+      // Fully type-safe Axios error handling
       if (err instanceof Error) {
         setError(err.message);
-      } else if (axiosErr.response?.data?.message) {
-        setError(axiosErr.response.data.message);
       } else {
-        setError("Something went wrong. Please try again.");
+        const axiosErr = err as AxiosErrorResponse;
+        if (axiosErr.response?.data?.message) {
+          setError(axiosErr.response.data.message);
+        } else {
+          setError("Something went wrong. Please try again.");
+        }
       }
     } finally {
       setLoading(false);
