@@ -14,6 +14,10 @@ interface User {
   reward: number;
 }
 
+// Use environment variable
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000"; // fallback for local dev
+
 export default function ReadOnlyProfilePage() {
   const [user, setUser] = useState<User | null>(null);
   const [transactions, setTransactions] = useState<UserTransaction[]>([]);
@@ -34,13 +38,13 @@ export default function ReadOnlyProfilePage() {
         if (!token) throw new Error("User not authenticated");
 
         const profileRes = await axios.get<User>(
-          "http://localhost:5000/api/user/profile",
+          `${API_BASE_URL}/api/user/profile`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setUser(profileRes.data);
 
         const txRes = await axios.get<UserTransaction[]>(
-          "http://localhost:5000/api/transactions",
+          `${API_BASE_URL}/api/transactions`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setTransactions(txRes.data);
