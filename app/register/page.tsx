@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import {
   User,
   Mail,
@@ -13,9 +15,9 @@ import {
   EyeOff,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import Footer from "@/components/Footer";
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -26,7 +28,6 @@ export default function RegisterPage() {
     confirmPassword: "",
     referral: "",
   });
-
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -42,7 +43,6 @@ export default function RegisterPage() {
     e.preventDefault();
     setMessage("");
 
-    // Check password match
     if (formData.password !== formData.confirmPassword) {
       setMessage("❌ Passwords do not match");
       return;
@@ -50,17 +50,26 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      const res = await fetch(
+        "https://polexvtu-backend-production.up.railway.app/api/auth/register",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        }
+      );
 
       const data = await res.json();
+
       if (!res.ok) throw new Error(data.message || "Registration failed");
 
-      setMessage("✅ Registration successful!");
+      // Store JWT token in localStorage
       localStorage.setItem("token", data.token);
+
+      setMessage("✅ Registration successful! Redirecting…");
+
+      // Redirect to dashboard after short delay
+      setTimeout(() => router.push("/dashboard"), 1000);
     } catch (error: unknown) {
       if (error instanceof Error) {
         setMessage("❌ " + error.message);
@@ -161,6 +170,7 @@ export default function RegisterPage() {
                   value={formData.gender}
                   onChange={handleChange}
                   className="w-full bg-transparent outline-none text-gray-800"
+                  required
                 >
                   <option value="">Select Gender</option>
                   <option value="male">Male</option>
@@ -223,7 +233,7 @@ export default function RegisterPage() {
                 </button>
               </div>
 
-              {/* Full width submit button */}
+              {/* Submit */}
               <div className="md:col-span-2">
                 <button
                   type="submit"
@@ -235,12 +245,19 @@ export default function RegisterPage() {
               </div>
             </form>
 
+            {/* Message */}
             {message && (
-              <p className="mt-4 text-center text-sm text-red-600">{message}</p>
+              <p
+                className={`mt-4 text-center text-sm ${
+                  message.startsWith("✅") ? "text-green-600" : "text-red-600"
+                }`}
+              >
+                {message}
+              </p>
             )}
 
             <p className="mt-4 text-center text-sm text-gray-600">
-              Already Register?{" "}
+              Already registered?{" "}
               <a
                 href="/login"
                 className="text-orange-500 font-semibold hover:underline"
