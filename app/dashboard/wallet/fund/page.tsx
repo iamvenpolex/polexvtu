@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 
 export default function FundWalletPage() {
   const [amount, setAmount] = useState<number | "">("");
@@ -32,19 +32,13 @@ export default function FundWalletPage() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // Redirect user to Paystack authorization page
       window.location.href = data.authorization_url;
     } catch (err: unknown) {
-      // Proper TypeScript-safe error handling
-      if (err instanceof Error) {
+      // Type-safe error handling
+      if (err instanceof AxiosError) {
+        setError(err.response?.data?.message || err.message || "Something went wrong");
+      } else if (err instanceof Error) {
         setError(err.message);
-      } else if (
-        typeof err === "object" &&
-        err !== null &&
-        "response" in err &&
-        typeof (err as any).response?.data?.message === "string"
-      ) {
-        setError((err as any).response.data.message);
       } else {
         setError("Something went wrong. Try again.");
       }
