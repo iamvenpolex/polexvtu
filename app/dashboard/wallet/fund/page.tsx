@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { apiFetch } from "@/app/dashboard/utils/api";
+import axios from "axios";
 
 export default function FundWalletPage() {
-  const [amount, setAmount] = useState<number | "">(""); // empty by default
+  const [amount, setAmount] = useState<number | "">("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -25,18 +25,15 @@ export default function FundWalletPage() {
 
     setLoading(true);
     try {
-      const { authorization_url } = await apiFetch<{
-        authorization_url: string;
-      }>(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/wallet/fund`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        data: { amount, email },
-      });
+      const { data } = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/wallet/fund`,
+        { amount, email },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-      window.location.href = authorization_url;
-    } catch (err: unknown) {
-      if (err instanceof Error) setError(err.message);
-      else setError("Something went wrong. Try again.");
+      window.location.href = data.authorization_url;
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -53,9 +50,7 @@ export default function FundWalletPage() {
         placeholder="Enter amount"
         className="w-full p-3 mb-4 border text-black border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-400"
         value={amount}
-        onChange={(e) =>
-          setAmount(e.target.value === "" ? "" : Number(e.target.value))
-        }
+        onChange={(e) => setAmount(e.target.value === "" ? "" : Number(e.target.value))}
         min={0}
       />
 
