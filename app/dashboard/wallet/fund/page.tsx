@@ -8,6 +8,13 @@ export default function FundWalletPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Use the correct backend URL based on environment
+  const API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    (process.env.NODE_ENV === "production"
+      ? "https://your-production-backend.com"
+      : "http://localhost:8080");
+
   const handleFund = async () => {
     setError("");
     const email = localStorage.getItem("email");
@@ -27,14 +34,14 @@ export default function FundWalletPage() {
 
     try {
       const { data } = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/wallet/fund`,
+        `${API_BASE_URL}/api/wallet/fund`,
         { amount, email },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
+      // Redirect user to Paystack checkout
       window.location.href = data.authorization_url;
     } catch (err: unknown) {
-      // Type-safe error handling
       if (err instanceof AxiosError) {
         setError(err.response?.data?.message || err.message || "Something went wrong");
       } else if (err instanceof Error) {
