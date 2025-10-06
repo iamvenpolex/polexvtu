@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import {
   Wifi,
   Phone,
@@ -17,38 +17,66 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+// ------------------------
+// Types
+// ------------------------
 interface User {
+  id: number;
+  first_name: string;
+  last_name: string;
   balance: number;
   reward: number;
+  email: string;
 }
 
+interface ApiError {
+  message: string;
+}
+
+// ------------------------
+// API Base URL
+// ------------------------
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  "https://polexvtu-backend-production.up.railway.app";
+
 export default function DashboardPage() {
+  // ------------------------
+  // States
+  // ------------------------
   const [showBalance, setShowBalance] = useState(true);
   const [showReward, setShowReward] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [firstName, setFirstName] = useState("");
+  const [error, setError] = useState<string>("");
+  const [firstName, setFirstName] = useState("User");
 
+  // ------------------------
+  // Fetch user data
+  // ------------------------
   useEffect(() => {
     const storedName = localStorage.getItem("firstName") || "User";
     setFirstName(storedName);
 
     const fetchUserData = async () => {
       try {
-        const token = localStorage.getItem("token"); // if using JWT auth
-        const response = await axios.get(
-          "http://localhost:5000/api/user/profile",
+        const token = localStorage.getItem("token");
+        if (!token) throw new Error("User not logged in");
+
+        const response = await axios.get<User>(
+          `${API_BASE_URL}/api/user/profile`,
           {
-            headers: {
-              Authorization: token ? `Bearer ${token}` : "",
-            },
+            headers: { Authorization: `Bearer ${token}` },
           }
         );
+
         setUser(response.data);
       } catch (err: unknown) {
+        console.error("❌ Error fetching data:", err);
+
         if (axios.isAxiosError(err)) {
-          setError(err.response?.data?.message || "Failed to fetch data");
+          const axiosErr = err as AxiosError<ApiError>;
+          setError(axiosErr.response?.data?.message || "Failed to fetch data");
         } else if (err instanceof Error) {
           setError(err.message);
         } else {
@@ -60,12 +88,18 @@ export default function DashboardPage() {
     };
 
     fetchUserData();
+
+    const interval = setInterval(fetchUserData, 45000); // auto-refresh
+    return () => clearInterval(interval);
   }, []);
 
+  // ------------------------
+  // Render
+  // ------------------------
   return (
     <div className="min-h-screen bg-gray-100 p-3 sm:p-6">
       <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
-        {/* Wallet Dashboard */}
+        {/* ---------------- Wallet Dashboard ---------------- */}
         <div className="bg-white rounded-xl shadow-md p-3 sm:p-6">
           <div className="flex items-center justify-between">
             <h1 className="text-base sm:text-xl font-semibold text-orange-600">
@@ -114,14 +148,14 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Updates Section */}
+        {/* ---------------- Updates Section ---------------- */}
         <div className="bg-white rounded-xl shadow-md p-2 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-700">
             📢 Latest Update: New discounts available on MTN data bundles!
           </p>
         </div>
 
-        {/* Fund & Withdraw */}
+        {/* ---------------- Fund & Withdraw ---------------- */}
         <div className="bg-white rounded-xl shadow-md p-3 sm:p-6">
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <Link
@@ -141,7 +175,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Services Section */}
+        {/* ---------------- Services Section ---------------- */}
         <div className="bg-white rounded-xl shadow-md p-3 sm:p-6 space-y-4">
           <h2 className="text-sm sm:text-base font-semibold text-gray-700">
             Services
