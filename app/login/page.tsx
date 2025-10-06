@@ -2,19 +2,23 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import api from "@/lib/api";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import axios from "axios";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [identifier, setIdentifier] = useState("");
+  const [identifier, setIdentifier] = useState(""); // Email or phone
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+
+  const API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    "https://polexvtu-backend-production.up.railway.app";
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -22,8 +26,11 @@ export default function LoginPage() {
     setMessage("");
 
     try {
-      // Correct endpoint: remove /api if your baseURL already points to backend
-      const res = await api.post("/api/auth/login", { identifier, password });
+      const res = await axios.post(`${API_BASE_URL}/api/auth/login`, {
+        identifier,
+        password,
+      });
+
       const { token, firstName, email } = res.data;
 
       localStorage.setItem("token", token);
@@ -33,10 +40,12 @@ export default function LoginPage() {
       setMessage("✅ Login successful!");
       router.push("/dashboard");
     } catch (err: unknown) {
-      if (err instanceof Error) {
+      if (axios.isAxiosError(err)) {
+        setMessage(err.response?.data?.message || "❌ Login failed");
+      } else if (err instanceof Error) {
         setMessage("❌ " + err.message);
       } else {
-        setMessage("❌ Login failed. Please try again.");
+        setMessage("❌ Something went wrong");
       }
     } finally {
       setLoading(false);
@@ -105,7 +114,7 @@ export default function LoginPage() {
               </p>
             )}
 
-            {/* Submit */}
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
