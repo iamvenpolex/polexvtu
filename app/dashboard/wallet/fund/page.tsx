@@ -8,6 +8,9 @@ export default function FundWalletPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // ------------------------
+  // Handle funding wallet (redirect to Paystack)
+  // ------------------------
   const handleFund = async () => {
     setError("");
     const email = localStorage.getItem("email");
@@ -26,23 +29,35 @@ export default function FundWalletPage() {
     setLoading(true);
 
     try {
+      // Ensure backend URL is set
+      const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+      if (!BASE_URL) throw new Error("Backend URL not configured");
+
+      // Call backend to initialize Paystack transaction
       const { authorization_url } = await apiFetch<{
         authorization_url: string;
-      }>(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/wallet/fund`, {
+      }>(`${BASE_URL}/api/wallet/fund`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         data: { amount, email },
       });
 
+      if (!authorization_url) throw new Error("Authorization URL not returned");
+
+      // Redirect user to Paystack payment page
       window.location.href = authorization_url;
     } catch (err: unknown) {
       if (err instanceof Error) setError(err.message);
       else setError("Something went wrong. Try again.");
+      console.error("Fund wallet error:", err);
     } finally {
       setLoading(false);
     }
   };
 
+  // ------------------------
+  // Render fund wallet form
+  // ------------------------
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded shadow">
       <h2 className="text-xl font-bold mb-4 text-orange-500">Fund Wallet</h2>
