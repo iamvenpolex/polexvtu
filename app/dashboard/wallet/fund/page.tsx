@@ -24,6 +24,7 @@ export default function FundWalletPage() {
     }
 
     setLoading(true);
+
     try {
       const { data } = await axios.post(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/wallet/fund`,
@@ -31,9 +32,22 @@ export default function FundWalletPage() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
+      // Redirect user to Paystack authorization page
       window.location.href = data.authorization_url;
-    } catch (err: any) {
-      setError(err.response?.data?.message || err.message || "Something went wrong");
+    } catch (err: unknown) {
+      // Proper TypeScript-safe error handling
+      if (err instanceof Error) {
+        setError(err.message);
+      } else if (
+        typeof err === "object" &&
+        err !== null &&
+        "response" in err &&
+        typeof (err as any).response?.data?.message === "string"
+      ) {
+        setError((err as any).response.data.message);
+      } else {
+        setError("Something went wrong. Try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -50,7 +64,9 @@ export default function FundWalletPage() {
         placeholder="Enter amount"
         className="w-full p-3 mb-4 border text-black border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-orange-400"
         value={amount}
-        onChange={(e) => setAmount(e.target.value === "" ? "" : Number(e.target.value))}
+        onChange={(e) =>
+          setAmount(e.target.value === "" ? "" : Number(e.target.value))
+        }
         min={0}
       />
 
