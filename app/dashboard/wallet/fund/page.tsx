@@ -1,19 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import api from "@/lib/api"; // your Axios instance
+import api from "@/lib/api";
 
 export default function FundWalletPage() {
-  const [amount, setAmount] = useState<number | "">("");
+  const [amount, setAmount] = useState<number | "">(""); // empty by default
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleFund = async () => {
     setError("");
-
     const email = localStorage.getItem("email");
+
     if (!email) {
-      setError("Email is missing. Please log in again.");
+      setError("Email missing. Please log in again.");
       return;
     }
 
@@ -23,16 +23,13 @@ export default function FundWalletPage() {
     }
 
     setLoading(true);
-
     try {
-      const { data } = await api.post("/wallet/fund", { amount, email });
+      const { data } = await api.post<{ authorization_url: string; reference: string }>(
+        "/wallet/fund",
+        { amount, email }
+      );
 
-      // Redirect user to Paystack checkout
-      if (data?.authorization_url) {
-        window.location.href = data.authorization_url;
-      } else {
-        setError("Failed to initialize payment. Try again.");
-      }
+      window.location.href = data.authorization_url;
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
@@ -44,7 +41,7 @@ export default function FundWalletPage() {
       ) {
         setError((err as any).response.data.message);
       } else {
-        setError("Something went wrong. Try again.");
+        setError("Something went wrong. Please try again.");
       }
     } finally {
       setLoading(false);
