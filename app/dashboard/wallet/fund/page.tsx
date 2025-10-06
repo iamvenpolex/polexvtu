@@ -1,27 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import axios, { AxiosError } from "axios";
+import api from "@/lib/api"; // your Axios instance
 
 export default function FundWalletPage() {
   const [amount, setAmount] = useState<number | "">("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Use the correct backend URL based on environment
-  const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    (process.env.NODE_ENV === "production"
-      ? "https://your-production-backend.com"
-      : "http://localhost:8080");
-
   const handleFund = async () => {
     setError("");
-    const email = localStorage.getItem("email");
-    const token = localStorage.getItem("token");
 
-    if (!email || !token) {
-      setError("Email or token missing. Please log in again.");
+    const email = localStorage.getItem("email");
+    if (!email) {
+      setError("Email is missing. Please log in again.");
       return;
     }
 
@@ -33,19 +25,24 @@ export default function FundWalletPage() {
     setLoading(true);
 
     try {
-      const { data } = await axios.post(
-        `${API_BASE_URL}/api/wallet/fund`,
-        { amount, email },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const { data } = await api.post("/wallet/fund", { amount, email });
 
       // Redirect user to Paystack checkout
-      window.location.href = data.authorization_url;
+      if (data?.authorization_url) {
+        window.location.href = data.authorization_url;
+      } else {
+        setError("Failed to initialize payment. Try again.");
+      }
     } catch (err: unknown) {
-      if (err instanceof AxiosError) {
-        setError(err.response?.data?.message || err.message || "Something went wrong");
-      } else if (err instanceof Error) {
+      if (err instanceof Error) {
         setError(err.message);
+      } else if (
+        typeof err === "object" &&
+        err !== null &&
+        "response" in err &&
+        typeof (err as any).response?.data?.message === "string"
+      ) {
+        setError((err as any).response.data.message);
       } else {
         setError("Something went wrong. Try again.");
       }
