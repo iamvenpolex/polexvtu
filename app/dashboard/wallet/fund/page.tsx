@@ -3,6 +3,14 @@
 import { useState } from "react";
 import api from "@/lib/api";
 
+interface ApiErrorResponse {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+}
+
 export default function FundWalletPage() {
   const [amount, setAmount] = useState<number | "">(""); // empty by default
   const [loading, setLoading] = useState(false);
@@ -31,15 +39,13 @@ export default function FundWalletPage() {
 
       window.location.href = data.authorization_url;
     } catch (err: unknown) {
+      // Type-safe handling of axios errors
+      const axiosErr = err as ApiErrorResponse;
+
       if (err instanceof Error) {
         setError(err.message);
-      } else if (
-        typeof err === "object" &&
-        err !== null &&
-        "response" in err &&
-        typeof (err as any).response?.data?.message === "string"
-      ) {
-        setError((err as any).response.data.message);
+      } else if (axiosErr.response?.data?.message) {
+        setError(axiosErr.response.data.message);
       } else {
         setError("Something went wrong. Please try again.");
       }

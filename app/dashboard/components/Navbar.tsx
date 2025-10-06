@@ -31,7 +31,7 @@ export default function Navbar() {
     <>
       <nav className="fixed top-0 left-0 w-full bg-white shadow px-4 sm:px-6 py-4 flex items-center justify-between z-50">
         {/* Logo / Brand */}
-        <Link href="/" className="text-xl font-bold flex items-center">
+        <Link href="/dashboard" className="text-xl font-bold flex items-center">
           <span className="text-orange-500">Tap</span>
           <span className="text-gray-800">Am</span>
         </Link>
