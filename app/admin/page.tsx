@@ -3,14 +3,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios, { AxiosError } from "axios";
 
-interface ApiError {
-  response?: {
-    data?: {
-      error?: string;
-    };
-  };
-}
-
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,11 +14,13 @@ export default function AdminLoginPage() {
     setError("");
 
     try {
+      // ✅ Correct backend URL
       const res = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/login`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/admin/login`,
         { email, password }
       );
 
+      // ✅ Save token and redirect
       localStorage.setItem("adminToken", res.data.token);
       router.push("/admin/dashboard");
     } catch (err) {
@@ -34,6 +28,9 @@ export default function AdminLoginPage() {
       const message =
         axiosError.response?.data?.error || "Login failed. Please try again.";
       setError(message);
+
+      // Log full error to console (for debugging)
+      console.error("Admin login error:", axiosError);
     }
   };
 
@@ -44,24 +41,29 @@ export default function AdminLoginPage() {
         className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md"
       >
         <h1 className="text-2xl font-bold text-center mb-4">Admin Login</h1>
-        {error && <p className="text-red-500 text-center">{error}</p>}
+        {error && <p className="text-red-500 text-center mb-3">{error}</p>}
+
         <input
           type="email"
           placeholder="Admin Email"
           className="border p-2 rounded w-full mb-3"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          required
         />
+
         <input
           type="password"
           placeholder="Password"
           className="border p-2 rounded w-full mb-3"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          required
         />
+
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
+          className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 transition"
         >
           Login
         </button>
