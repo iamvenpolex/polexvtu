@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 interface User {
-  balance: number | string; // could come as string from API
+  balance: number | string;
 }
 
 interface Transaction {
@@ -16,43 +16,59 @@ export default function AdminDashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isClient, setIsClient] = useState(false);
 
-  useEffect(() => {
-    setIsClient(true); // ensure we only render numeric calculations on client
-    fetchUsers();
-    fetchTransactions();
-  }, []);
+  const API_BASE =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
 
-  const fetchUsers = async () => {
+  // Fetch users
+  const fetchUsers = useCallback(async () => {
     try {
-      const res = await fetch("http://localhost:8080/api/admin/users");
+      const token = localStorage.getItem("adminToken");
+      if (!token) return setUsers([]);
+
+      const res = await fetch(`${API_BASE}/api/admin/users`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const data = await res.json();
-      setUsers(data);
+      setUsers(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to fetch users:", err);
+      setUsers([]);
     }
-  };
+  }, [API_BASE]);
 
-  const fetchTransactions = async () => {
+  // Fetch transactions
+  const fetchTransactions = useCallback(async () => {
     try {
-      const res = await fetch("http://localhost:8080/api/admin/transactions");
+      const token = localStorage.getItem("adminToken");
+      if (!token) return setTransactions([]);
+
+      const res = await fetch(`${API_BASE}/api/admin/transactions`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const data = await res.json();
-      setTransactions(data);
+      setTransactions(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to fetch transactions:", err);
+      setTransactions([]);
     }
-  };
+  }, [API_BASE]);
 
-  // Ensure we parse balances as numbers
+  useEffect(() => {
+    setIsClient(true);
+    fetchUsers();
+    fetchTransactions();
+  }, [fetchUsers, fetchTransactions]);
+
+  // Safe calculations
   const totalBalance = users.reduce(
     (acc, u) => acc + (Number(u.balance) || 0),
     0
   );
-
   const pendingTransactions = transactions.filter(
     (t) => t.status === "pending"
   ).length;
 
-  if (!isClient) return null; // avoid hydration mismatch
+  if (!isClient) return null;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -60,10 +76,12 @@ export default function AdminDashboard() {
         <h2 className="text-lg font-semibold">Total Users</h2>
         <p className="text-2xl font-bold">{users.length}</p>
       </div>
+
       <div className="p-6 bg-white shadow rounded text-center">
         <h2 className="text-lg font-semibold">Total Balance</h2>
         <p className="text-2xl font-bold">₦{totalBalance.toFixed(2)}</p>
       </div>
+
       <div className="p-6 bg-white shadow rounded text-center">
         <h2 className="text-lg font-semibold">Pending Transactions</h2>
         <p className="text-2xl font-bold">{pendingTransactions}</p>
