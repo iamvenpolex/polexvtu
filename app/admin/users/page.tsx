@@ -27,7 +27,7 @@ export default function AdminUsersPage() {
   }, []);
 
   const fetchUsers = async () => {
-    const res = await fetch("http://localhost:5000/api/admin/users");
+    const res = await fetch("http://localhost:8080/api/admin/users");
     const data = await res.json();
     setUsers(data);
 
@@ -48,7 +48,7 @@ export default function AdminUsersPage() {
 
   const updateUser = async (id: number) => {
     const edit = userEdits[id];
-    await fetch(`http://localhost:5000/api/admin/users/${id}`, {
+    await fetch(`http://localhost:8080/api/admin/users/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(edit),

@@ -1,73 +1,71 @@
 "use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import axios, { AxiosError } from "axios";
 
-import { useEffect, useState } from "react";
-
-interface User {
-  balance: number | string; // could come as string from API
+interface ApiError {
+  response?: {
+    data?: {
+      error?: string;
+    };
+  };
 }
 
-interface Transaction {
-  status: string;
-  amount: number;
-}
+export default function AdminLoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const router = useRouter();
 
-export default function AdminDashboard() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [isClient, setIsClient] = useState(false);
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
 
-  useEffect(() => {
-    setIsClient(true); // ensure we only render numeric calculations on client
-    fetchUsers();
-    fetchTransactions();
-  }, []);
-
-  const fetchUsers = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/admin/users");
-      const data = await res.json();
-      setUsers(data);
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/login`,
+        { email, password }
+      );
+
+      localStorage.setItem("adminToken", res.data.token);
+      router.push("/admin/dashboard");
     } catch (err) {
-      console.error("Failed to fetch users:", err);
+      const axiosError = err as AxiosError<{ error?: string }>;
+      const message =
+        axiosError.response?.data?.error || "Login failed. Please try again.";
+      setError(message);
     }
   };
-
-  const fetchTransactions = async () => {
-    try {
-      const res = await fetch("http://localhost:5000/api/admin/transactions");
-      const data = await res.json();
-      setTransactions(data);
-    } catch (err) {
-      console.error("Failed to fetch transactions:", err);
-    }
-  };
-
-  // Ensure we parse balances as numbers
-  const totalBalance = users.reduce(
-    (acc, u) => acc + (Number(u.balance) || 0),
-    0
-  );
-
-  const pendingTransactions = transactions.filter(
-    (t) => t.status === "pending"
-  ).length;
-
-  if (!isClient) return null; // avoid hydration mismatch
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div className="p-6 bg-white shadow rounded text-center">
-        <h2 className="text-lg font-semibold">Total Users</h2>
-        <p className="text-2xl font-bold">{users.length}</p>
-      </div>
-      <div className="p-6 bg-white shadow rounded text-center">
-        <h2 className="text-lg font-semibold">Total Balance</h2>
-        <p className="text-2xl font-bold">₦{totalBalance.toFixed(2)}</p>
-      </div>
-      <div className="p-6 bg-white shadow rounded text-center">
-        <h2 className="text-lg font-semibold">Pending Transactions</h2>
-        <p className="text-2xl font-bold">{pendingTransactions}</p>
-      </div>
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <form
+        onSubmit={handleLogin}
+        className="bg-white p-6 rounded-xl shadow-lg w-full max-w-md"
+      >
+        <h1 className="text-2xl font-bold text-center mb-4">Admin Login</h1>
+        {error && <p className="text-red-500 text-center">{error}</p>}
+        <input
+          type="email"
+          placeholder="Admin Email"
+          className="border p-2 rounded w-full mb-3"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          className="border p-2 rounded w-full mb-3"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <button
+          type="submit"
+          className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
+        >
+          Login
+        </button>
+      </form>
     </div>
   );
 }
