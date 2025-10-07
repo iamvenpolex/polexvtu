@@ -7,11 +7,13 @@ import Link from "next/link";
 import { LayoutDashboard } from "lucide-react";
 
 export default function RewardWalletPage() {
-  const [amount, setAmount] = useState(0);
+  const [amount, setAmount] = useState(""); // ✅ start empty
   const [rewardBalance, setRewardBalance] = useState(0);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [token, setToken] = useState("");
+
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
     const storedToken = localStorage.getItem("token") || "";
@@ -27,9 +29,9 @@ export default function RewardWalletPage() {
   );
 
   const fetchReward = useCallback(async () => {
-    if (!token) return;
+    if (!token || !API_BASE_URL) return;
     try {
-      const res = await axios.get("http://localhost:5000/api/wallet/balance", {
+      const res = await axios.get(`${API_BASE_URL}/api/wallet/balance`, {
         headers,
       });
       setRewardBalance(res.data.reward);
@@ -42,23 +44,26 @@ export default function RewardWalletPage() {
         console.error("An unknown error occurred");
       }
     }
-  }, [headers, token]);
+  }, [headers, token, API_BASE_URL]);
 
   useEffect(() => {
     fetchReward();
   }, [fetchReward]);
 
   const handleRewardToWallet = async () => {
-    if (amount <= 0) return setMessage("Enter a valid amount");
+    const numericAmount = parseFloat(amount);
+    if (!numericAmount || numericAmount <= 0)
+      return setMessage("Enter a valid amount");
+
     setLoading(true);
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/withdraw/reward-to-wallet",
-        { amount },
+        `${API_BASE_URL}/api/withdraw/reward-to-wallet`,
+        { amount: numericAmount },
         { headers }
       );
       setMessage(res.data.message);
-      setAmount(0);
+      setAmount(""); // ✅ reset input
       fetchReward();
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
@@ -72,6 +77,14 @@ export default function RewardWalletPage() {
       setLoading(false);
     }
   };
+
+  // ✅ Clear message automatically after 3 seconds
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => setMessage(""), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 sm:p-6">
