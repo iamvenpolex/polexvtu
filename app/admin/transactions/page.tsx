@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 interface Transaction {
   id: number;
@@ -22,23 +22,48 @@ export default function AdminTransactionsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
+  const API_BASE =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+
+  const fetchTransactions = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const res = await fetch(`${API_BASE}/api/admin/transactions`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) return;
+      const data = await res.json();
+      setTransactions(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [API_BASE]);
+
   useEffect(() => {
     fetchTransactions();
-  }, []);
-
-  const fetchTransactions = async () => {
-    const res = await fetch("http://localhost:5000/api/admin/transactions");
-    const data = await res.json();
-    setTransactions(data);
-  };
+  }, [fetchTransactions]);
 
   const updateTransactionStatus = async (id: number, status: string) => {
-    await fetch(`http://localhost:5000/api/admin/transactions/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
-    fetchTransactions();
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      await fetch(`${API_BASE}/api/admin/transactions/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      fetchTransactions();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -54,7 +79,6 @@ export default function AdminTransactionsPage() {
     }
   };
 
-  // Filter & pagination
   const filteredTransactions = transactions.filter(
     (t) =>
       (`${t.first_name} ${t.last_name}`
@@ -72,7 +96,7 @@ export default function AdminTransactionsPage() {
   );
 
   return (
-    <div>
+    <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Transactions</h1>
 
       <div className="flex gap-2 mb-3">
@@ -149,7 +173,6 @@ export default function AdminTransactionsPage() {
         </tbody>
       </table>
 
-      {/* Pagination */}
       <div className="flex justify-center gap-2 mt-4">
         <button
           onClick={() => setPage(Math.max(page - 1, 1))}

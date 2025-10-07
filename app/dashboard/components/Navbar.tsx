@@ -4,10 +4,12 @@ import { useState, useEffect, useRef } from "react";
 import { Bell, User, LogOut, HelpCircle, Settings } from "lucide-react";
 import Link from "next/link";
 import ComingSoonTag from "@/components/ComingSoonTag";
+import { useAuth } from "@/context/AuthContext"; // ✅ import context
 
 export default function Navbar() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const { user, logout } = useAuth(); // ✅ use context
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -19,13 +21,6 @@ export default function Navbar() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("firstName");
-    localStorage.removeItem("email");
-    window.location.href = "/login";
-  };
 
   return (
     <>
@@ -62,7 +57,9 @@ export default function Navbar() {
               className="flex items-center gap-2 text-gray-700 hover:text-orange-500"
             >
               <User size={22} />
-              <span className="hidden sm:inline">Profile</span>
+              <span className="hidden sm:inline">
+                {user?.first_name || "Profile"}
+              </span>
             </button>
 
             {showProfileMenu && (
@@ -87,7 +84,7 @@ export default function Navbar() {
                 </Link>
 
                 <button
-                  onClick={handleLogout}
+                  onClick={logout} // ✅ use context logout
                   className="flex items-center gap-2 px-3 py-2 w-full text-left text-red-600 hover:bg-gray-100 rounded"
                 >
                   <LogOut size={18} />

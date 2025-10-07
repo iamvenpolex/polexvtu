@@ -17,18 +17,13 @@ export default function PageLoader({
 
     setLoading(true);
 
-    // Fake delay for smoother transition
-    const timeout = setTimeout(() => {
-      setLoading(false);
-    }, 700);
+    const timeout = setTimeout(() => setLoading(false), 700);
 
     return () => clearTimeout(timeout);
   }, [pathname]);
 
-  return (
-    <>
-      {loading && <Loader />}
-      {children}
-    </>
-  );
+  // Only render children after loading finishes
+  if (loading) return <Loader />;
+
+  return <>{children}</>;
 }

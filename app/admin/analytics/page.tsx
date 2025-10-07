@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Bar, Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -47,25 +47,53 @@ export default function AdminAnalyticsPage() {
   const [range, setRange] = useState<"day" | "week" | "month">("day");
   const [isClient, setIsClient] = useState(false);
 
+  const API_BASE =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
+
+  const fetchTopUsers = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const res = await fetch(`${API_BASE}/api/admin/top-users`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+      setTopUsers(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [API_BASE]);
+
+  const fetchIncome = useCallback(
+    async (range: "day" | "week" | "month") => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const res = await fetch(`${API_BASE}/api/admin/income?range=${range}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+        setIncomeData(data);
+      } catch (err) {
+        console.error(err);
+      }
+    },
+    [API_BASE]
+  );
+
   useEffect(() => {
-    setIsClient(true); // Only true on client
+    setIsClient(true);
     fetchTopUsers();
     fetchIncome(range);
-  }, [range]);
-
-  const fetchTopUsers = async () => {
-    const res = await fetch("http://localhost:5000/api/admin/top-users");
-    const data = await res.json();
-    setTopUsers(data);
-  };
-
-  const fetchIncome = async (range: "day" | "week" | "month") => {
-    const res = await fetch(
-      `http://localhost:5000/api/admin/income?range=${range}`
-    );
-    const data = await res.json();
-    setIncomeData(data);
-  };
+  }, [fetchTopUsers, fetchIncome, range]);
 
   const handleExportPDF = () => {
     if (!isClient) return;
@@ -114,7 +142,7 @@ export default function AdminAnalyticsPage() {
   };
 
   return (
-    <div>
+    <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Analytics</h1>
 
       <div className="flex items-center gap-4 mb-4">

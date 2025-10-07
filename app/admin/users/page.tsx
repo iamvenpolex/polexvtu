@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 interface User {
   id: number;
@@ -22,38 +22,65 @@ export default function AdminUsersPage() {
   >({});
   const [page, setPage] = useState(1);
 
+  const API_BASE =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const res = await fetch(`${API_BASE}/api/admin/users`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+      if (!Array.isArray(data)) return;
+
+      setUsers(data);
+
+      const edits: Record<
+        number,
+        { balance: number; reward: number; role: string }
+      > = {};
+      data.forEach((u: User) => {
+        edits[u.id] = {
+          balance: Number(u.balance) || 0,
+          reward: Number(u.reward) || 0,
+          role: u.role || "user",
+        };
+      });
+      setUserEdits(edits);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [API_BASE]);
+
   useEffect(() => {
     fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
-    const res = await fetch("http://localhost:8080/api/admin/users");
-    const data = await res.json();
-    setUsers(data);
-
-    // Initialize userEdits
-    const edits: Record<
-      number,
-      { balance: number; reward: number; role: string }
-    > = {};
-    data.forEach((u: User) => {
-      edits[u.id] = {
-        balance: Number(u.balance) || 0,
-        reward: Number(u.reward) || 0,
-        role: u.role || "user",
-      };
-    });
-    setUserEdits(edits);
-  };
+  }, [fetchUsers]);
 
   const updateUser = async (id: number) => {
-    const edit = userEdits[id];
-    await fetch(`http://localhost:8080/api/admin/users/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(edit),
-    });
-    fetchUsers();
+    try {
+      const edit = userEdits[id];
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      await fetch(`${API_BASE}/api/admin/users/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(edit),
+      });
+
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const totalPages = Math.ceil(users.length / ITEMS_PER_PAGE);
@@ -63,7 +90,7 @@ export default function AdminUsersPage() {
   );
 
   return (
-    <div>
+    <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Users</h1>
       <table className="w-full border border-gray-300">
         <thead className="bg-gray-800 text-white">
