@@ -56,7 +56,7 @@ export default function LoginPage() {
     <div className="flex flex-col min-h-screen bg-gray-100">
       <Navbar />
 
-      <div className="flex flex-1 items-center justify-center bg-[url('/home-bg.jpg')] bg-cover bg-center relative">
+      <div className="flex flex-1 items-center justify-center bg-[url('/home-bg.jpg')] bg-cover bg-center relative pt-28 pb-28">
         <div className="absolute inset-0 bg-black/50"></div>
 
         <motion.div
