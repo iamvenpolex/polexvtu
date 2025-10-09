@@ -3,111 +3,124 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-interface Plan {
-  id: number;
+// ✅ Define the shape of each data plan
+interface DataPlan {
+  network: string;
+  plan_id: string;
   plan_name: string;
-  plan_code: string;
-  selling_price: number;
-  validity: string;
-  provider_id: number;
+  price: number;
 }
-
-interface Provider {
-  id: number;
-  name: string;
-}
-
-// Determine base URL: use local in dev, Railway in prod
-const API_BASE_URL =
-  process.env.NODE_ENV === "development"
-    ? "http://localhost:8080"
-    : "https://polexvtu-backend-production.up.railway.app";
 
 export default function BuyDataPage() {
-  const [providers] = useState<Provider[]>([
-    { id: 1, name: "MTN" },
-    { id: 2, name: "Airtel" },
-    { id: 3, name: "GLO" },
-    { id: 4, name: "9Mobile" },
-  ]);
+  // ✅ Component state
+  const [plans, setPlans] = useState<DataPlan[]>([]);
+  const [selectedPlan, setSelectedPlan] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
-  const [selectedProvider, setSelectedProvider] = useState<number | null>(null);
-  const [plans, setPlans] = useState<Plan[]>([]);
-  const [phone, setPhone] = useState("");
+  // ✅ Retrieve user ID from localStorage
+  const userId =
+    typeof window !== "undefined" ? localStorage.getItem("userId") : null;
 
+  // ✅ Fetch available data plans on component mount
   useEffect(() => {
-    if (!selectedProvider) return;
-
     const fetchPlans = async () => {
       try {
-        const res = await axios.get(
-          `${API_BASE_URL}/api/plan?provider_id=${selectedProvider}`
+        const res = await axios.get<DataPlan[]>(
+          "https://polexvtu-backend-production.up.railway.app/api/plan/data"
         );
         setPlans(res.data);
       } catch (err) {
-        console.error("Failed to load data plans.", err);
-        setPlans([]);
+        console.error("Error fetching plans:", err);
+        setMessage("❌ Failed to load data plans.");
       }
     };
 
     fetchPlans();
-  }, [selectedProvider]);
+  }, []);
 
+  // ✅ Handle “Buy Data” button click
+  const handleBuyData = async () => {
+    if (!selectedPlan || !mobile) {
+      setMessage("Please select a plan and enter a mobile number.");
+      return;
+    }
+
+    setLoading(true);
+    setMessage("");
+
+    try {
+      await axios.post(
+        "https://polexvtu-backend-production.up.railway.app/api/vtu/buy-data",
+        {
+          userId,
+          network: selectedPlan.split("-")[0],
+          plan_id: selectedPlan.split("-")[1],
+          mobile_number: mobile,
+        }
+      );
+
+      setMessage("✅ Data purchase successful!");
+      setMobile("");
+      setSelectedPlan("");
+    } catch (err) {
+      console.error("Error buying data:", err);
+      setMessage("❌ Failed to buy data.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ JSX UI
   return (
-    <div className="max-w-md mx-auto p-4 font-sans">
-      <h1 className="text-2xl font-bold mb-4 text-orange-500">Buy Data</h1>
+    <div className="p-6 max-w-3xl mx-auto">
+      <h1 className="text-2xl font-semibold mb-4 text-center">Buy Data</h1>
 
-      <label className="block mb-2 text-black font-semibold">
-        Select Network
-      </label>
-      <select
-        className="w-full p-2 border border-gray-300 text-black    rounded mb-4"
-        value={selectedProvider ?? ""}
-        onChange={(e) => setSelectedProvider(Number(e.target.value))}
-      >
-        <option value="">-- Choose Network --</option>
-        {providers.map((p) => (
-          <option key={p.id} value={p.id}>
-            {p.name}
-          </option>
-        ))}
-      </select>
+      <div className="space-y-4">
+        {/* Select Data Plan */}
+        <select
+          className="w-full border rounded p-2"
+          value={selectedPlan}
+          onChange={(e) => setSelectedPlan(e.target.value)}
+        >
+          <option value="">Select Plan</option>
+          {plans.map((plan, idx) => (
+            <option key={idx} value={`${plan.network}-${plan.plan_id}`}>
+              {plan.network.toUpperCase()} — {plan.plan_name} (₦{plan.price})
+            </option>
+          ))}
+        </select>
 
-      <label className="block mb-2 text-black  font-semibold">
-        Select Data Plan
-      </label>
-      <select
-        className="w-full p-2 border border-gray-300 text-black  rounded mb-4"
-        disabled={!plans.length}
-      >
-        <option value="">-- Choose Plan --</option>
-        {plans.map((plan) => (
-          <option key={plan.id} value={plan.plan_code}>
-            {plan.plan_name} - ₦{plan.selling_price} ({plan.validity})
-          </option>
-        ))}
-      </select>
+        {/* Enter Mobile Number */}
+        <input
+          type="text"
+          placeholder="Enter Mobile Number"
+          value={mobile}
+          onChange={(e) => setMobile(e.target.value)}
+          className="w-full border rounded p-2"
+        />
 
-      <label className="block mb-2 text-black  font-semibold">
-        Phone Number
-      </label>
-      <input
-        type="text"
-        className="w-full p-2 border border-gray-300 text-black  rounded mb-4"
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-        placeholder="Enter phone number"
-      />
+        {/* Buy Button */}
+        <button
+          onClick={handleBuyData}
+          disabled={loading}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition"
+        >
+          {loading ? "Processing..." : "Buy Data"}
+        </button>
 
-      <button className="w-full bg-orange-500 text-white p-2 rounded font-semibold">
-        Buy Data
-      </button>
-
-      {!plans.length && selectedProvider && (
-        <p className="mt-2 text-red-500 font-semibold">
-          ❌ Failed to load data plans.
-        </p>
-      )}
+        {/* Feedback Message */}
+        {message && (
+          <p
+            className={`text-center mt-4 ${
+              message.startsWith("✅") ? "text-green-600" : "text-red-600"
+            }`}
+          >
+            {message}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

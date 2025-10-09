@@ -5,7 +5,7 @@ export async function fundWallet(amount: number, email: string) {
   if (!email) throw new Error("Email is required");
 
   const data = await apiFetch<{ authorization_url: string }>(
-    "http://localhost:5000/api/wallet/fund",
+    "http://localhost:8080/api/wallet/fund",
     {
       method: "POST",
       data: { amount, email },

@@ -2,10 +2,19 @@
 
 import { motion } from "framer-motion";
 import { MessageCircle } from "lucide-react";
+import Link from "next/link";
 
 export default function DashboardSupportPage() {
   return (
     <div className="flex flex-col min-h-screen items-center justify-center bg-gray-100 px-6 py-12">
+      <div className="">
+        <Link
+          href="/dashboard"
+          className="inline-block text-sm bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition"
+        >
+          &larr; Back to Dashboard
+        </Link>
+      </div>
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
