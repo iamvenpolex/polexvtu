@@ -1,37 +1,42 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 export default function DashboardSupportPage() {
   return (
-    <div className="flex flex-col min-h-screen items-center justify-center bg-gray-100 px-6 py-12">
-      <div className="">
+    <div className="min-h-screen bg-gray-50 px-6 py-12">
+      {/* 🔙 Back to Dashboard */}
+      <div className="mb-8">
         <Link
           href="/dashboard"
-          className="inline-block text-sm bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition"
+          className="inline-flex items-center gap-2 text-sm bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition"
         >
-          &larr; Back to Dashboard
+          <ArrowLeft size={16} />
+          <span>Back to Dashboard</span>
         </Link>
       </div>
+
+      {/* 💬 Support Section */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-sm bg-white p-8 rounded-2xl shadow-lg text-center"
+        className="max-w-2xl mx-auto text-center"
       >
-        <MessageCircle className="text-green-600 mx-auto mb-4" size={48} />
-        <h1 className="text-2xl font-bold text-blue-900 mb-2">Need Help?</h1>
-        <p className="text-gray-600 text-sm mb-6">
-          Our support team is available on WhatsApp. Tap below to start a chat.
+        <MessageCircle className="text-green-600 mx-auto mb-6" size={60} />
+        <h1 className="text-3xl font-bold text-blue-900 mb-3">Need Help?</h1>
+        <p className="text-gray-600 text-base mb-8">
+          Our support team is available on WhatsApp. Tap below to start a
+          conversation — we’re here to help!
         </p>
 
         <a
           href="https://wa.me/2348032648367"
           target="_blank"
           rel="noopener noreferrer"
-          className="block bg-green-600 text-white font-semibold py-3 rounded-lg hover:bg-green-700 transition"
+          className="inline-block bg-green-600 text-white font-semibold text-lg px-6 py-3 rounded-lg hover:bg-green-700 transition"
         >
           Chat on WhatsApp
         </a>

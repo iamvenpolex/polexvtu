@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { apiFetch } from "@/app/dashboard/utils/api";
 
 export default function FundWalletPage() {
@@ -60,6 +62,15 @@ export default function FundWalletPage() {
   // ------------------------
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded shadow">
+      <div className="mb-8">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-2 text-sm bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition"
+        >
+          <ArrowLeft size={16} />
+          <span>Back to Dashboard</span>
+        </Link>
+      </div>
       <h2 className="text-xl font-bold mb-4 text-orange-500">Fund Wallet</h2>
 
       {error && <p className="text-red-500 mb-2">{error}</p>}

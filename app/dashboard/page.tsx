@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import NotificationPopup from "./components/NotificationPopup";
+
 import axios, { AxiosError } from "axios";
 import {
   Wifi,
@@ -106,6 +108,9 @@ export default function DashboardPage() {
               Hi, {firstName} 👋
             </h1>
           </div>
+
+          {/* 🔔 Welcome Popup */}
+          <NotificationPopup firstName={firstName} />
 
           {loading && (
             <p className="mt-3 text-gray-500">Loading wallet info...</p>

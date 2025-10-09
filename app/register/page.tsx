@@ -69,7 +69,7 @@ export default function RegisterPage() {
       setMessage("✅ Registration successful! Redirecting…");
 
       // Redirect to dashboard after short delay
-      setTimeout(() => router.push("/dashboard"), 1000);
+      setTimeout(() => router.push("/login"), 1000);
     } catch (error: unknown) {
       if (error instanceof Error) {
         setMessage("❌ " + error.message);

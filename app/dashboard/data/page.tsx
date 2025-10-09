@@ -3,124 +3,61 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-// ✅ Define the shape of each data plan
 interface DataPlan {
-  network: string;
   plan_id: string;
+  network: string;
   plan_name: string;
   price: number;
 }
 
-export default function BuyDataPage() {
-  // ✅ Component state
+export default function DataPage() {
   const [plans, setPlans] = useState<DataPlan[]>([]);
-  const [selectedPlan, setSelectedPlan] = useState("");
-  const [mobile, setMobile] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // ✅ Retrieve user ID from localStorage
-  const userId =
-    typeof window !== "undefined" ? localStorage.getItem("userId") : null;
-
-  // ✅ Fetch available data plans on component mount
   useEffect(() => {
-    const fetchPlans = async () => {
+    async function fetchPlans() {
       try {
-        const res = await axios.get<DataPlan[]>(
-          "https://polexvtu-backend-production.up.railway.app/api/plan/data"
+        const res = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_BASE}/api/plan/data`
         );
         setPlans(res.data);
       } catch (err) {
-        console.error("Error fetching plans:", err);
-        setMessage("❌ Failed to load data plans.");
+        console.error("❌ Failed to load data plans:", err);
+        setError("Failed to load data plans.");
+      } finally {
+        setLoading(false);
       }
-    };
+    }
 
     fetchPlans();
   }, []);
 
-  // ✅ Handle “Buy Data” button click
-  const handleBuyData = async () => {
-    if (!selectedPlan || !mobile) {
-      setMessage("Please select a plan and enter a mobile number.");
-      return;
-    }
+  if (loading) return <p>Loading plans...</p>;
+  if (error) return <p className="text-red-500">{error}</p>;
 
-    setLoading(true);
-    setMessage("");
-
-    try {
-      await axios.post(
-        "https://polexvtu-backend-production.up.railway.app/api/vtu/buy-data",
-        {
-          userId,
-          network: selectedPlan.split("-")[0],
-          plan_id: selectedPlan.split("-")[1],
-          mobile_number: mobile,
-        }
-      );
-
-      setMessage("✅ Data purchase successful!");
-      setMobile("");
-      setSelectedPlan("");
-    } catch (err) {
-      console.error("Error buying data:", err);
-      setMessage("❌ Failed to buy data.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ✅ JSX UI
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-semibold mb-4 text-center">Buy Data</h1>
+    <div className="p-6 text-black">
+      <h1 className="text-2xl font-bold mb-4">Available Data Plans</h1>
 
-      <div className="space-y-4">
-        {/* Select Data Plan */}
-        <select
-          className="w-full border rounded p-2"
-          value={selectedPlan}
-          onChange={(e) => setSelectedPlan(e.target.value)}
-        >
-          <option value="">Select Plan</option>
-          {plans.map((plan, idx) => (
-            <option key={idx} value={`${plan.network}-${plan.plan_id}`}>
-              {plan.network.toUpperCase()} — {plan.plan_name} (₦{plan.price})
-            </option>
+      <table className="w-full border border-gray-300 rounded-lg text-left">
+        <thead>
+          <tr className="bg-gray-100">
+            <th className="p-2 border">Network</th>
+            <th className="p-2 border">Plan Name</th>
+            <th className="p-2 border">Price (₦)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {plans.map((plan) => (
+            <tr key={plan.plan_id}>
+              <td className="p-2 border">{plan.network}</td>
+              <td className="p-2 border">{plan.plan_name}</td>
+              <td className="p-2 border">₦{plan.price}</td>
+            </tr>
           ))}
-        </select>
-
-        {/* Enter Mobile Number */}
-        <input
-          type="text"
-          placeholder="Enter Mobile Number"
-          value={mobile}
-          onChange={(e) => setMobile(e.target.value)}
-          className="w-full border rounded p-2"
-        />
-
-        {/* Buy Button */}
-        <button
-          onClick={handleBuyData}
-          disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded transition"
-        >
-          {loading ? "Processing..." : "Buy Data"}
-        </button>
-
-        {/* Feedback Message */}
-        {message && (
-          <p
-            className={`text-center mt-4 ${
-              message.startsWith("✅") ? "text-green-600" : "text-red-600"
-            }`}
-          >
-            {message}
-          </p>
-        )}
-      </div>
+        </tbody>
+      </table>
     </div>
   );
 }

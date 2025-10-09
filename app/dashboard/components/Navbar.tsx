@@ -43,12 +43,16 @@ export default function Navbar() {
           </Link>
 
           {/* Notifications */}
-          <button className="relative text-gray-600 hover:text-orange-500">
+          <Link
+            href="/dashboard/notifications"
+            className="relative flex items-center text-gray-600 hover:text-orange-500 transition"
+          >
             <Bell size={22} />
-            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1 rounded-full">
-              5
+            {/* 🔴 Notification badge */}
+            <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-semibold px-1.5 rounded-full">
+              3
             </span>
-          </button>
+          </Link>
 
           {/* Profile Dropdown */}
           <div className="relative" ref={menuRef}>
