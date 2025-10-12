@@ -1,188 +1,406 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import axios, { AxiosError } from "axios";
 
-interface DataPlan {
-  network: string;
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+
+type Plan = {
   plan_id: string;
-  plan_name: string;
+  name: string;
   price: number;
-}
+  validity: string;
+};
 
-export default function BuyDataPage() {
-  const [plans, setPlans] = useState<DataPlan[]>([]);
-  const [selectedNetwork, setSelectedNetwork] = useState("");
-  const [selectedPlan, setSelectedPlan] = useState("");
-  const [mobile, setMobile] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [fetching, setFetching] = useState(false);
+const NETWORKS: Record<
+  string,
+  { label: string; productTypes: { key: string; label: string }[] }
+> = {
+  mtn: {
+    label: "MTN",
+    productTypes: [
+      { key: "mtn_sme", label: "SME" },
+      { key: "mtn_cg_lite", label: "CG Lite" },
+      { key: "mtn_cg", label: "CG" },
+      { key: "mtn_awoof", label: "Awoof" },
+      { key: "mtn_gifting", label: "Gifting" },
+    ],
+  },
+  glo: {
+    label: "GLO",
+    productTypes: [
+      { key: "glo_cg", label: "CG" },
+      { key: "glo_awoof", label: "Awoof" },
+      { key: "glo_gifting", label: "Gifting" },
+    ],
+  },
+  airtel: {
+    label: "AIRTEL",
+    productTypes: [
+      { key: "airtel_cg", label: "CG" },
+      { key: "airtel_awoof", label: "Awoof" },
+      { key: "airtel_gifting", label: "Gifting" },
+    ],
+  },
+  "9mobile": {
+    label: "9MOBILE",
+    productTypes: [
+      { key: "9mobile_sme", label: "SME" },
+      { key: "9mobile_gifting", label: "Gifting" },
+    ],
+  },
+};
 
-  const userId =
-    typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+export default function DataPurchasePage() {
+  const [selectedNetwork, setSelectedNetwork] = useState<string>("mtn");
+  const [selectedProductType, setSelectedProductType] =
+    useState<string>("mtn_sme");
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [loadingPlans, setLoadingPlans] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [phone, setPhone] = useState("");
+  const [buyingId, setBuyingId] = useState<string | null>(null);
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-  // ✅ Fetch data plans whenever the selected network changes
   useEffect(() => {
-    const fetchPlans = async () => {
-      if (!selectedNetwork) return; // Only fetch when user selects a network
+    if (!selectedProductType) return;
+    fetchPlans(selectedProductType);
+  }, [selectedProductType]);
 
-      setFetching(true);
-      setMessage("📡 Fetching EasyAccess data plans...");
+  // ---------- Fetch Plans ----------
+  async function fetchPlans(productType: string) {
+    setLoadingPlans(true);
+    setError(null);
+    setPlans([]);
 
-      try {
-        const res = await axios.get<DataPlan[]>(
-          `${API_BASE_URL}/api/plan/data`,
-          {
-            params: { network: selectedNetwork }, // ✅ Send network to backend
-          }
-        );
+    try {
+      const res = await axios.get<{
+        success: boolean;
+        message: string;
+        product_type: string;
+        plans: Plan[];
+      }>(`${BASE_URL}/api/vtu/plans/${productType}`);
 
-        console.log("✅ EasyAccess response received:", res.data);
-
-        if (Array.isArray(res.data) && res.data.length > 0) {
-          setPlans(res.data);
-          setMessage("");
-        } else {
-          setPlans([]);
-          setMessage("❌ No plans found or unexpected data format.");
-        }
-      } catch (err) {
-        console.error("Error fetching plans:", err);
-        setMessage("❌ Failed to load data plans.");
-      } finally {
-        setFetching(false);
+      if (res.data.success) {
+        setPlans(res.data.plans || []);
+      } else {
+        setError(res.data.message || "Failed to load plans");
       }
-    };
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        const message = err.response?.data?.message || err.message;
+        console.error("fetchPlans axios error:", message);
+        setError(message);
+      } else if (err instanceof Error) {
+        console.error("fetchPlans error:", err.message);
+        setError(err.message);
+      } else {
+        console.error("fetchPlans unknown error:", err);
+        setError("Failed to load plans");
+      }
+    } finally {
+      setLoadingPlans(false);
+    }
+  }
 
-    fetchPlans();
-  }, [selectedNetwork, API_BASE_URL]);
-
-  // ✅ Handle Buy Data
-  const handleBuyData = async () => {
-    if (!selectedNetwork || !selectedPlan || !mobile) {
-      setMessage("Please select a network, plan, and enter mobile number.");
+  // ---------- Buy Data ----------
+  async function handleBuy(plan: Plan) {
+    if (!phone || phone.length < 10) {
+      alert("Please enter a valid phone number (11 digits).");
       return;
     }
 
-    setLoading(true);
-    setMessage("");
+    const confirmed = confirm(
+      `Buy ${plan.name} for ₦${plan.price} to ${phone}?`
+    );
+    if (!confirmed) return;
 
     try {
-      await axios.post(`${API_BASE_URL}/api/vtu/buy-data`, {
-        userId,
-        network: selectedNetwork,
-        plan_id: selectedPlan,
-        mobile_number: mobile,
-      });
+      setBuyingId(plan.plan_id);
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
-      setMessage("✅ Data purchase successful!");
-      setMobile("");
-      setSelectedNetwork("");
-      setSelectedPlan("");
-      setPlans([]);
-    } catch (err) {
-      console.error("Error buying data:", err);
-      setMessage("❌ Failed to buy data.");
+      const payload = {
+        network: getNetworkCodeFromProductKey(selectedProductType),
+        mobileno: phone,
+        dataplan: plan.plan_id,
+        client_reference: `WEB_${Date.now()}`,
+      };
+
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      const res = await axios.post<{
+        success: boolean | string;
+        message: string;
+      }>(`${BASE_URL}/api/vtu/buy-data`, payload, { headers });
+
+      if (res.data.success === true || res.data.success === "true") {
+        alert(res.data.message || "Purchase successful");
+      } else {
+        alert(res.data.message || "Purchase may have failed");
+      }
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        const message = err.response?.data?.message || err.message;
+        console.error("Buy error (axios):", message);
+        alert(message);
+      } else if (err instanceof Error) {
+        console.error("Buy error:", err.message);
+        alert(err.message);
+      } else {
+        console.error("Buy unknown error:", err);
+        alert("Purchase failed");
+      }
     } finally {
-      setLoading(false);
+      setBuyingId(null);
     }
-  };
+  }
 
+  function getNetworkCodeFromProductKey(productKey?: string) {
+    if (!productKey) return "01";
+    if (productKey.startsWith("mtn")) return "01";
+    if (productKey.startsWith("glo")) return "02";
+    if (productKey.startsWith("airtel")) return "03";
+    if (productKey.startsWith("9mobile")) return "04";
+    return "01";
+  }
+
+  // ---------- Render ----------
   return (
-    <div className="min-h-screen bg-gray-50 px-6 py-10 text-black">
-      {/* 🔙 Back Button */}
-      <div className="mb-6">
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-2 text-sm bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition"
-        >
-          <ArrowLeft size={16} />
-          <span>Back to Dashboard</span>
-        </Link>
+    <div style={styles.page}>
+      <div style={styles.header}>
+        <h1 style={styles.title}>Buy Data</h1>
+        <p style={styles.subtitle}>
+          Select network, pick product type, choose plan — instant delivery.
+        </p>
       </div>
 
-      {/* 🧾 Buy Data Card */}
-      <div className="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow-md">
-        <h1 className="text-2xl font-semibold mb-6 text-center text-orange-900">
-          Buy Data
-        </h1>
-
-        <div className="space-y-5">
-          {/* ✅ Select Network */}
-          <select
-            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 focus:outline-none text-black"
-            value={selectedNetwork}
-            onChange={(e) => {
-              setSelectedNetwork(e.target.value);
-              setPlans([]);
-              setSelectedPlan("");
-            }}
-          >
-            <option value="">Select Network</option>
-            <option value="MTN">MTN</option>
-            <option value="AIRTEL">AIRTEL</option>
-            <option value="GLO">GLO</option>
-            <option value="9MOBILE">9MOBILE</option>
-          </select>
-
-          {/* ✅ Select Plan */}
-          <select
-            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 focus:outline-none text-black"
-            value={selectedPlan}
-            onChange={(e) => setSelectedPlan(e.target.value)}
-            disabled={!selectedNetwork || fetching}
-          >
-            <option value="">Select Plan</option>
-            {plans.map((plan) => (
-              <option key={plan.plan_id} value={plan.plan_id}>
-                {plan.plan_name} (₦{plan.price})
-              </option>
-            ))}
-          </select>
-
-          {/* ✅ Enter Mobile Number */}
-          <input
-            type="text"
-            placeholder="Enter Mobile Number"
-            value={mobile}
-            onChange={(e) => setMobile(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-orange-500 focus:outline-none text-black"
-          />
-
-          {/* ✅ Buy Button */}
-          <button
-            onClick={handleBuyData}
-            disabled={loading || fetching}
-            className="w-full bg-blue-600 hover:bg-orange-700 text-white font-semibold py-3 rounded-lg transition disabled:opacity-70"
-          >
-            {loading
-              ? "Processing..."
-              : fetching
-              ? "Loading plans..."
-              : "Buy Data"}
-          </button>
-
-          {/* ✅ Feedback Message */}
-          {message && (
-            <p
-              className={`text-center mt-4 font-medium ${
-                message.startsWith("✅")
-                  ? "text-green-600"
-                  : message.startsWith("📡")
-                  ? "text-orange-600"
-                  : "text-red-600"
-              }`}
+      {/* Network Buttons */}
+      <div style={styles.networkBar}>
+        {Object.entries(NETWORKS).map(([key, meta]) => {
+          const active = key === selectedNetwork;
+          return (
+            <button
+              key={key}
+              onClick={() => {
+                setSelectedNetwork(key);
+                setSelectedProductType(NETWORKS[key].productTypes[0].key);
+                setPlans([]);
+              }}
+              style={{
+                ...styles.networkButton,
+                ...(active ? styles.networkButtonActive : {}),
+              }}
             >
-              {message}
-            </p>
-          )}
-        </div>
+              {meta.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Product Types */}
+      <div style={styles.productTypes}>
+        {selectedNetwork &&
+          NETWORKS[selectedNetwork].productTypes.map((pt) => {
+            const active = pt.key === selectedProductType;
+            return (
+              <button
+                key={pt.key}
+                onClick={() => setSelectedProductType(pt.key)}
+                style={{
+                  ...styles.productTypeButton,
+                  ...(active ? styles.productTypeButtonActive : {}),
+                }}
+              >
+                {pt.label}
+              </button>
+            );
+          })}
+      </div>
+
+      {/* Phone Input */}
+      <div style={styles.controlsRow}>
+        <input
+          placeholder="Enter phone number (e.g. 0803xxxxxxx)"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          style={styles.phoneInput}
+        />
+        <button
+          onClick={() => fetchPlans(selectedProductType)}
+          style={styles.refreshButton}
+          disabled={loadingPlans}
+        >
+          {loadingPlans ? "Loading..." : "Refresh Plans"}
+        </button>
+      </div>
+
+      {/* Error */}
+      {error && <div style={styles.errorBox}>{error}</div>}
+
+      {/* Plans */}
+      <div style={styles.plansGrid}>
+        {loadingPlans ? (
+          <div style={styles.loading}>Loading plans…</div>
+        ) : plans.length === 0 ? (
+          <div style={styles.noPlans}>
+            No plans found for selected product type.
+          </div>
+        ) : (
+          plans.map((plan) => (
+            <div key={plan.plan_id} style={styles.card}>
+              <div style={styles.cardHeader}>
+                <div style={styles.planName}>{plan.name}</div>
+                <div style={styles.planPrice}>₦{plan.price}</div>
+              </div>
+              <div style={styles.cardBody}>
+                <div style={styles.validity}>Validity: {plan.validity}</div>
+                <div style={styles.features}>
+                  Instant delivery • Auto-refund supported
+                </div>
+              </div>
+              <div style={styles.cardFooter}>
+                <button
+                  onClick={() => handleBuy(plan)}
+                  disabled={Boolean(buyingId)}
+                  style={styles.buyButton}
+                >
+                  {buyingId === plan.plan_id ? "Processing..." : "Buy Now"}
+                </button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
 }
+
+// ---------- Styles ----------
+const ORANGE = "#ff8a00";
+const styles: Record<string, React.CSSProperties> = {
+  page: {
+    padding: 20,
+    fontFamily: "Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial",
+  },
+  header: { marginBottom: 18 },
+  title: { margin: 0, fontSize: 24, fontWeight: 700, color: "orange" },
+  subtitle: { margin: 0, color: "#666", marginTop: 6 },
+
+  networkBar: {
+    display: "flex",
+    gap: 10,
+    marginTop: 16,
+    marginBottom: 12,
+    flexWrap: "wrap",
+  },
+  networkButton: {
+    padding: "8px 14px",
+    borderRadius: 10,
+    border: "1px solid #eee",
+    background: "#fff",
+    cursor: "pointer",
+    fontWeight: 600,
+    boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
+    color: "black",
+  },
+  networkButtonActive: {
+    background: ORANGE,
+    color: "#fff",
+    border: `1px solid ${ORANGE}`,
+  },
+
+  productTypes: {
+    display: "flex",
+    gap: 8,
+    marginBottom: 14,
+    flexWrap: "wrap",
+    color: "black",
+  },
+  productTypeButton: {
+    padding: "6px 10px",
+    borderRadius: 8,
+    border: "1px solid #eee",
+    background: "#fff",
+    cursor: "pointer",
+    fontSize: 13,
+    fontWeight: 600,
+  },
+  productTypeButtonActive: {
+    background: "#fff7f1",
+    border: `1px solid ${ORANGE}`,
+    color: ORANGE,
+  },
+
+  controlsRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 18,
+  },
+  phoneInput: {
+    padding: "10px 12px",
+    borderRadius: 8,
+    border: "1px solid #ddd",
+    minWidth: 220,
+    color: "black",
+  },
+  refreshButton: {
+    padding: "10px 14px",
+    borderRadius: 8,
+    border: "none",
+    background: ORANGE,
+    color: "#fff",
+    cursor: "pointer",
+    fontWeight: 700,
+  },
+
+  errorBox: {
+    background: "#ffe9e6",
+    padding: 12,
+    borderRadius: 8,
+    color: "#b00000",
+    marginBottom: 12,
+  },
+
+  plansGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+    gap: 14,
+    alignItems: "stretch",
+  },
+  loading: { padding: 20 },
+  noPlans: { padding: 10, color: "#666" },
+
+  card: {
+    background: "#fff",
+    borderRadius: 12,
+    padding: 14,
+    boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    color: "black",
+    minHeight: 130,
+  },
+  cardHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  planName: { fontWeight: 700 },
+  planPrice: { fontWeight: 800, color: ORANGE, fontSize: 18 },
+  cardBody: { marginTop: 10, color: "#444" },
+  validity: { fontSize: 13, color: "#666" },
+  features: { fontSize: 12, color: "#888", marginTop: 6 },
+  cardFooter: { marginTop: 12, display: "flex", justifyContent: "flex-end" },
+  buyButton: {
+    background: ORANGE,
+    color: "#fff",
+    border: "none",
+    padding: "10px 14px",
+    borderRadius: 8,
+    fontWeight: 700,
+    cursor: "pointer",
+  },
+};

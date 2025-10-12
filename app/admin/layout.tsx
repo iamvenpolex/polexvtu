@@ -3,7 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Menu, X, Home, Users, CreditCard, BarChart2 } from "lucide-react";
+import {
+  Menu,
+  X,
+  Home,
+  Users,
+  CreditCard,
+  BarChart2,
+  Phone,
+} from "lucide-react";
 
 export default function AdminLayout({
   children,
@@ -25,6 +33,11 @@ export default function AdminLayout({
       name: "Analytics",
       href: "/admin/analytics",
       icon: <BarChart2 size={20} />,
+    },
+    {
+      name: "Data",
+      href: "/admin/data-prices",
+      icon: <Phone size={20} />,
     },
   ];
 
