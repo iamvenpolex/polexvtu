@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
@@ -9,7 +9,20 @@ type Plan = {
   plan_id: string;
   name: string;
   price: number;
+  custom_price?: number;
   validity: string;
+};
+
+type ApiResponse = {
+  success: boolean;
+  message: string;
+  plans: Plan[];
+};
+
+type BuyDataResponse = {
+  success: boolean;
+  message?: string;
+  reference?: string;
 };
 
 const NETWORKS: Record<
@@ -70,17 +83,14 @@ export default function DataPurchasePage() {
     setError(null);
     setPlans([]);
     try {
-      const res = await axios.get(`${BASE_URL}/api/vtu/plans/${productType}`);
-      if (res.data.success) setPlans(res.data.plans || []);
+      const res = await axios.get<ApiResponse>(
+        `${BASE_URL}/api/vtu/plans/${productType}`
+      );
+      if (res.data.success) setPlans(res.data.plans);
       else setError(res.data.message || "Failed to load plans");
-    } catch (err: unknown) {
-      const message = axios.isAxiosError(err)
-        ? err.response?.data?.message || err.message
-        : err instanceof Error
-        ? err.message
-        : "Failed to load plans";
-      console.error("fetchPlans error:", message);
-      setError(message);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load plans");
     } finally {
       setLoadingPlans(false);
     }
@@ -88,48 +98,63 @@ export default function DataPurchasePage() {
 
   async function handleBuy(plan: Plan) {
     if (!phone || phone.length < 10) {
-      alert("Please enter a valid phone number (11 digits).");
+      alert("Enter a valid phone number");
       return;
     }
 
     const confirmed = confirm(
-      `Buy ${plan.name} for ₦${plan.price} to ${phone}?`
+      `Buy ${plan.name} for ₦${plan.custom_price ?? plan.price}?`
     );
     if (!confirmed) return;
 
     try {
       setBuyingId(plan.plan_id);
-      const token =
-        typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
+      const token = localStorage.getItem("token");
+      const user_id = localStorage.getItem("user_id");
+
+      if (!user_id) {
+        alert("User not logged in");
+        return;
+      }
 
       const payload = {
+        user_id,
         network: getNetworkCodeFromProductKey(selectedProductType),
         mobile_no: phone,
         dataplan: plan.plan_id,
+        balanceType: "wallet", // use wallet balance
       };
 
       const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      const res = await axios.post(`${BASE_URL}/api/vtu/buydata`, payload, {
-        headers,
-      });
+      const res = await axios.post<BuyDataResponse>(
+        `${BASE_URL}/api/buydata`,
+        payload,
+        { headers }
+      );
 
       if (res.data.success) {
         alert(
-          `Purchase initiated!\nAmount paid: ₦${plan.price}\nReference: ${res.data.reference}\nAuto-refund supported if failed.`
+          `Purchase initiated!\nAmount paid: ₦${
+            plan.custom_price ?? plan.price
+          }\nReference: ${res.data.reference}`
         );
       } else {
         alert(res.data.message || "Purchase may have failed.");
       }
     } catch (err: unknown) {
-      const message = axios.isAxiosError(err)
-        ? err.response?.data?.message || err.message
-        : err instanceof Error
-        ? err.message
-        : "Purchase failed";
-      console.error("Buy error:", message);
-      alert(message);
+      if (axios.isAxiosError(err)) {
+        console.error("Buy error:", err.response?.data || err.message);
+        alert(err.response?.data?.message || "Purchase failed");
+      } else if (err instanceof Error) {
+        console.error("Buy error:", err.message);
+        alert(err.message);
+      } else {
+        console.error("Unknown error:", err);
+        alert("Purchase failed");
+      }
     } finally {
       setBuyingId(null);
     }
@@ -148,7 +173,6 @@ export default function DataPurchasePage() {
     <div style={styles.page}>
       <h1 style={styles.title}>Buy Data</h1>
 
-      {/* Network Buttons */}
       <div style={styles.networkBar}>
         {Object.entries(NETWORKS).map(([key, meta]) => (
           <button
@@ -168,7 +192,6 @@ export default function DataPurchasePage() {
         ))}
       </div>
 
-      {/* Product Types */}
       <div style={styles.productTypes}>
         {NETWORKS[selectedNetwork].productTypes.map((pt) => (
           <button
@@ -186,7 +209,6 @@ export default function DataPurchasePage() {
         ))}
       </div>
 
-      {/* Phone Input */}
       <div style={styles.controlsRow}>
         <input
           placeholder="Enter phone number"
@@ -205,7 +227,6 @@ export default function DataPurchasePage() {
 
       {error && <div style={styles.errorBox}>{error}</div>}
 
-      {/* Plans */}
       <div style={styles.plansGrid}>
         {loadingPlans ? (
           <div>Loading plans…</div>
@@ -216,7 +237,9 @@ export default function DataPurchasePage() {
             <div key={plan.plan_id} style={styles.card}>
               <div style={styles.cardHeader}>
                 <div style={styles.planName}>{plan.name}</div>
-                <div style={styles.planPrice}>₦{plan.price}</div>
+                <div style={styles.planPrice}>
+                  ₦{plan.custom_price ?? plan.price}
+                </div>
               </div>
               <div style={styles.cardBody}>
                 <div style={styles.validity}>Validity: {plan.validity}</div>
@@ -243,47 +266,69 @@ export default function DataPurchasePage() {
 
 // ---------- Styles ----------
 const ORANGE = "#ff8a00";
+const DARK_TEXT = "#222";
 const styles: Record<string, React.CSSProperties> = {
   page: {
-    padding: 20,
+    padding: 16,
     fontFamily: "Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial",
   },
-  title: { fontSize: 24, fontWeight: 700, color: ORANGE, marginBottom: 12 },
-  networkBar: { display: "flex", gap: 10, marginBottom: 12, flexWrap: "wrap" },
+  title: { fontSize: 22, fontWeight: 700, color: ORANGE, marginBottom: 12 },
+  networkBar: {
+    display: "flex",
+    gap: 8,
+    marginBottom: 12,
+    flexWrap: "wrap",
+    overflowX: "auto",
+  },
   networkButton: {
-    padding: "8px 14px",
+    padding: "6px 10px",
     borderRadius: 10,
-    border: "1px solid #eee",
+    border: "1px solid #ccc",
     background: "#fff",
     cursor: "pointer",
     fontWeight: 600,
+    fontSize: 13,
+    color: DARK_TEXT,
+    minWidth: 70,
+    textAlign: "center",
   },
   networkButtonActive: {
     background: ORANGE,
     color: "#fff",
     border: `1px solid ${ORANGE}`,
   },
-  productTypes: { display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" },
+  productTypes: {
+    display: "flex",
+    gap: 6,
+    marginBottom: 12,
+    flexWrap: "wrap",
+    overflowX: "auto",
+  },
   productTypeButton: {
-    padding: "6px 10px",
+    padding: "4px 8px",
     borderRadius: 8,
-    border: "1px solid #eee",
+    border: "1px solid #ccc",
     background: "#fff",
     cursor: "pointer",
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: 600,
+    color: DARK_TEXT,
+    minWidth: 60,
+    textAlign: "center",
   },
   productTypeButtonActive: {
     background: "#fff7f1",
     border: `1px solid ${ORANGE}`,
     color: ORANGE,
   },
-  controlsRow: { display: "flex", gap: 8, marginBottom: 18 },
+  controlsRow: { display: "flex", gap: 8, marginBottom: 18, flexWrap: "wrap" },
   phoneInput: {
     padding: "10px 12px",
     borderRadius: 8,
-    border: "1px solid #ddd",
-    minWidth: 220,
+    border: "1px solid #ccc",
+    flex: 1,
+    minWidth: 140,
+    color: DARK_TEXT,
   },
   refreshButton: {
     padding: "10px 14px",
@@ -303,7 +348,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   plansGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
     gap: 14,
   },
   card: {
@@ -314,25 +359,27 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     flexDirection: "column",
     justifyContent: "space-between",
+    color: DARK_TEXT,
   },
   cardHeader: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  planName: { fontWeight: 700 },
-  planPrice: { fontWeight: 800, color: ORANGE, fontSize: 18 },
-  cardBody: { marginTop: 10 },
-  validity: { fontSize: 13, color: "#666" },
-  features: { fontSize: 12, color: "#888", marginTop: 6 },
-  cardFooter: { marginTop: 12, display: "flex", justifyContent: "flex-end" },
+  planName: { fontWeight: 700, fontSize: 14, color: DARK_TEXT },
+  planPrice: { fontWeight: 800, color: ORANGE, fontSize: 16 },
+  cardBody: { marginTop: 8 },
+  validity: { fontSize: 13, color: DARK_TEXT },
+  features: { fontSize: 12, color: "#444", marginTop: 4 },
+  cardFooter: { marginTop: 10, display: "flex", justifyContent: "flex-end" },
   buyButton: {
     background: ORANGE,
     color: "#fff",
     border: "none",
-    padding: "10px 14px",
+    padding: "8px 12px",
     borderRadius: 8,
     fontWeight: 700,
     cursor: "pointer",
+    fontSize: 14,
   },
 };

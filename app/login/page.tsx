@@ -8,6 +8,13 @@ import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
+type LoginResponse = {
+  token: string;
+  firstName: string;
+  email: string;
+  user_id: number; // <-- added user_id
+};
+
 export default function LoginPage() {
   const router = useRouter();
   const [identifier, setIdentifier] = useState(""); // Email or phone
@@ -26,16 +33,20 @@ export default function LoginPage() {
     setMessage("");
 
     try {
-      const res = await axios.post(`${API_BASE_URL}/api/auth/login`, {
-        identifier,
-        password,
-      });
+      const res = await axios.post<LoginResponse>(
+        `${API_BASE_URL}/api/auth/login`,
+        {
+          identifier,
+          password,
+        }
+      );
 
-      const { token, firstName, email } = res.data;
+      const { token, firstName, email, user_id } = res.data;
 
       localStorage.setItem("token", token);
       localStorage.setItem("firstName", firstName);
       localStorage.setItem("email", email);
+      localStorage.setItem("user_id", String(user_id)); // ✅ fixed
 
       setMessage("✅ Login successful!");
       router.push("/dashboard");
@@ -92,7 +103,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg  text-black focus:outline-none focus:ring-2 focus:ring-orange-400"
+                className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-orange-400"
               />
               <button
                 type="button"

@@ -1,16 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 interface Plan {
   plan_id: string;
   name: string;
-  price: number;
+  price: number; // EA price from EasyAccess API (static)
   validity: string;
-  custom_price?: number;
+  custom_price?: number; // editable
 }
 
 const PRODUCT_TYPES = [
@@ -43,23 +43,16 @@ export default function AdminDataPrices() {
         const res = await axios.get<{ plans: Plan[] }>(
           `${BASE_URL}/api/vtu/plans/${productType}`
         );
+
         setPlans(res.data.plans || []);
-      } catch (err: unknown) {
-        if (axios.isAxiosError(err)) {
-          console.error(
-            "fetchPlans AxiosError:",
-            err.response?.data || err.message
-          );
-        } else if (err instanceof Error) {
-          console.error("fetchPlans Error:", err.message);
-        } else {
-          console.error("fetchPlans Unknown error:", err);
-        }
+      } catch (err) {
+        console.error("fetchPlans error:", err);
         setPlans([]);
       } finally {
         setLoading(false);
       }
     }
+
     fetchPlans();
   }, [productType]);
 
@@ -67,14 +60,16 @@ export default function AdminDataPrices() {
   const handlePriceChange = (planId: string, value: string) => {
     setPlans((prev) =>
       prev.map((p) =>
-        p.plan_id === planId ? { ...p, custom_price: Number(value) } : p
+        p.plan_id === planId
+          ? { ...p, custom_price: value === "" ? undefined : Number(value) }
+          : p
       )
     );
   };
 
   // Save custom price to backend
   const saveCustomPrice = async (plan: Plan) => {
-    if (!plan.custom_price) {
+    if (plan.custom_price == null) {
       alert("Custom price cannot be empty!");
       return;
     }
@@ -90,17 +85,8 @@ export default function AdminDataPrices() {
         status: "active",
       });
       alert("Custom price saved!");
-    } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        console.error(
-          "saveCustomPrice AxiosError:",
-          err.response?.data || err.message
-        );
-      } else if (err instanceof Error) {
-        console.error("saveCustomPrice Error:", err.message);
-      } else {
-        console.error("saveCustomPrice Unknown error:", err);
-      }
+    } catch (err) {
+      console.error("saveCustomPrice error:", err);
       alert("Failed to save custom price");
     } finally {
       setSavingPlanId(null);
@@ -135,8 +121,9 @@ export default function AdminDataPrices() {
           <thead>
             <tr className="bg-orange-100">
               <th className="border px-3 py-1">Plan Name</th>
-              <th className="border px-3 py-1">API Price</th>
+              <th className="border px-3 py-1">EA Price</th>
               <th className="border px-3 py-1">Custom Price</th>
+              <th className="border px-3 py-1">Displayed Price</th>
               <th className="border px-3 py-1">Validity</th>
               <th className="border px-3 py-1">Action</th>
             </tr>
@@ -155,6 +142,9 @@ export default function AdminDataPrices() {
                     }
                     className="border px-2 py-1 w-24"
                   />
+                </td>
+                <td className="border px-3 py-1">
+                  ₦{plan.custom_price ?? plan.price}
                 </td>
                 <td className="border px-3 py-1">{plan.validity}</td>
                 <td className="border px-3 py-1">
