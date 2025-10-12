@@ -62,47 +62,30 @@ export default function DataPurchasePage() {
   const [buyingId, setBuyingId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!selectedProductType) return;
-    fetchPlans(selectedProductType);
+    if (selectedProductType) fetchPlans(selectedProductType);
   }, [selectedProductType]);
 
-  // ---------- Fetch Plans ----------
   async function fetchPlans(productType: string) {
     setLoadingPlans(true);
     setError(null);
     setPlans([]);
-
     try {
-      const res = await axios.get<{
-        success: boolean;
-        message: string;
-        product_type: string;
-        plans: Plan[];
-      }>(`${BASE_URL}/api/vtu/plans/${productType}`);
-
-      if (res.data.success) {
-        setPlans(res.data.plans || []);
-      } else {
-        setError(res.data.message || "Failed to load plans");
-      }
+      const res = await axios.get(`${BASE_URL}/api/vtu/plans/${productType}`);
+      if (res.data.success) setPlans(res.data.plans || []);
+      else setError(res.data.message || "Failed to load plans");
     } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        const message = err.response?.data?.message || err.message;
-        console.error("fetchPlans axios error:", message);
-        setError(message);
-      } else if (err instanceof Error) {
-        console.error("fetchPlans error:", err.message);
-        setError(err.message);
-      } else {
-        console.error("fetchPlans unknown error:", err);
-        setError("Failed to load plans");
-      }
+      const message = axios.isAxiosError(err)
+        ? err.response?.data?.message || err.message
+        : err instanceof Error
+        ? err.message
+        : "Failed to load plans";
+      console.error("fetchPlans error:", message);
+      setError(message);
     } finally {
       setLoadingPlans(false);
     }
   }
 
-  // ---------- Buy Data ----------
   async function handleBuy(plan: Plan) {
     if (!phone || phone.length < 10) {
       alert("Please enter a valid phone number (11 digits).");
@@ -121,36 +104,32 @@ export default function DataPurchasePage() {
 
       const payload = {
         network: getNetworkCodeFromProductKey(selectedProductType),
-        mobileno: phone,
+        mobile_no: phone,
         dataplan: plan.plan_id,
-        client_reference: `WEB_${Date.now()}`,
       };
 
       const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      const res = await axios.post<{
-        success: boolean | string;
-        message: string;
-      }>(`${BASE_URL}/api/vtu/buy-data`, payload, { headers });
+      const res = await axios.post(`${BASE_URL}/api/vtu/buydata`, payload, {
+        headers,
+      });
 
-      if (res.data.success === true || res.data.success === "true") {
-        alert(res.data.message || "Purchase successful");
+      if (res.data.success) {
+        alert(
+          `Purchase initiated!\nAmount paid: ₦${plan.price}\nReference: ${res.data.reference}\nAuto-refund supported if failed.`
+        );
       } else {
-        alert(res.data.message || "Purchase may have failed");
+        alert(res.data.message || "Purchase may have failed.");
       }
     } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        const message = err.response?.data?.message || err.message;
-        console.error("Buy error (axios):", message);
-        alert(message);
-      } else if (err instanceof Error) {
-        console.error("Buy error:", err.message);
-        alert(err.message);
-      } else {
-        console.error("Buy unknown error:", err);
-        alert("Purchase failed");
-      }
+      const message = axios.isAxiosError(err)
+        ? err.response?.data?.message || err.message
+        : err instanceof Error
+        ? err.message
+        : "Purchase failed";
+      console.error("Buy error:", message);
+      alert(message);
     } finally {
       setBuyingId(null);
     }
@@ -165,63 +144,52 @@ export default function DataPurchasePage() {
     return "01";
   }
 
-  // ---------- Render ----------
   return (
     <div style={styles.page}>
-      <div style={styles.header}>
-        <h1 style={styles.title}>Buy Data</h1>
-        <p style={styles.subtitle}>
-          Select network, pick product type, choose plan — instant delivery.
-        </p>
-      </div>
+      <h1 style={styles.title}>Buy Data</h1>
 
       {/* Network Buttons */}
       <div style={styles.networkBar}>
-        {Object.entries(NETWORKS).map(([key, meta]) => {
-          const active = key === selectedNetwork;
-          return (
-            <button
-              key={key}
-              onClick={() => {
-                setSelectedNetwork(key);
-                setSelectedProductType(NETWORKS[key].productTypes[0].key);
-                setPlans([]);
-              }}
-              style={{
-                ...styles.networkButton,
-                ...(active ? styles.networkButtonActive : {}),
-              }}
-            >
-              {meta.label}
-            </button>
-          );
-        })}
+        {Object.entries(NETWORKS).map(([key, meta]) => (
+          <button
+            key={key}
+            onClick={() => {
+              setSelectedNetwork(key);
+              setSelectedProductType(meta.productTypes[0].key);
+              setPlans([]);
+            }}
+            style={{
+              ...styles.networkButton,
+              ...(key === selectedNetwork ? styles.networkButtonActive : {}),
+            }}
+          >
+            {meta.label}
+          </button>
+        ))}
       </div>
 
       {/* Product Types */}
       <div style={styles.productTypes}>
-        {selectedNetwork &&
-          NETWORKS[selectedNetwork].productTypes.map((pt) => {
-            const active = pt.key === selectedProductType;
-            return (
-              <button
-                key={pt.key}
-                onClick={() => setSelectedProductType(pt.key)}
-                style={{
-                  ...styles.productTypeButton,
-                  ...(active ? styles.productTypeButtonActive : {}),
-                }}
-              >
-                {pt.label}
-              </button>
-            );
-          })}
+        {NETWORKS[selectedNetwork].productTypes.map((pt) => (
+          <button
+            key={pt.key}
+            onClick={() => setSelectedProductType(pt.key)}
+            style={{
+              ...styles.productTypeButton,
+              ...(pt.key === selectedProductType
+                ? styles.productTypeButtonActive
+                : {}),
+            }}
+          >
+            {pt.label}
+          </button>
+        ))}
       </div>
 
       {/* Phone Input */}
       <div style={styles.controlsRow}>
         <input
-          placeholder="Enter phone number (e.g. 0803xxxxxxx)"
+          placeholder="Enter phone number"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
           style={styles.phoneInput}
@@ -235,17 +203,14 @@ export default function DataPurchasePage() {
         </button>
       </div>
 
-      {/* Error */}
       {error && <div style={styles.errorBox}>{error}</div>}
 
       {/* Plans */}
       <div style={styles.plansGrid}>
         {loadingPlans ? (
-          <div style={styles.loading}>Loading plans…</div>
+          <div>Loading plans…</div>
         ) : plans.length === 0 ? (
-          <div style={styles.noPlans}>
-            No plans found for selected product type.
-          </div>
+          <div>No plans found.</div>
         ) : (
           plans.map((plan) => (
             <div key={plan.plan_id} style={styles.card}>
@@ -262,7 +227,7 @@ export default function DataPurchasePage() {
               <div style={styles.cardFooter}>
                 <button
                   onClick={() => handleBuy(plan)}
-                  disabled={Boolean(buyingId)}
+                  disabled={buyingId === plan.plan_id}
                   style={styles.buyButton}
                 >
                   {buyingId === plan.plan_id ? "Processing..." : "Buy Now"}
@@ -283,17 +248,8 @@ const styles: Record<string, React.CSSProperties> = {
     padding: 20,
     fontFamily: "Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial",
   },
-  header: { marginBottom: 18 },
-  title: { margin: 0, fontSize: 24, fontWeight: 700, color: "orange" },
-  subtitle: { margin: 0, color: "#666", marginTop: 6 },
-
-  networkBar: {
-    display: "flex",
-    gap: 10,
-    marginTop: 16,
-    marginBottom: 12,
-    flexWrap: "wrap",
-  },
+  title: { fontSize: 24, fontWeight: 700, color: ORANGE, marginBottom: 12 },
+  networkBar: { display: "flex", gap: 10, marginBottom: 12, flexWrap: "wrap" },
   networkButton: {
     padding: "8px 14px",
     borderRadius: 10,
@@ -301,22 +257,13 @@ const styles: Record<string, React.CSSProperties> = {
     background: "#fff",
     cursor: "pointer",
     fontWeight: 600,
-    boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
-    color: "black",
   },
   networkButtonActive: {
     background: ORANGE,
     color: "#fff",
     border: `1px solid ${ORANGE}`,
   },
-
-  productTypes: {
-    display: "flex",
-    gap: 8,
-    marginBottom: 14,
-    flexWrap: "wrap",
-    color: "black",
-  },
+  productTypes: { display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" },
   productTypeButton: {
     padding: "6px 10px",
     borderRadius: 8,
@@ -331,19 +278,12 @@ const styles: Record<string, React.CSSProperties> = {
     border: `1px solid ${ORANGE}`,
     color: ORANGE,
   },
-
-  controlsRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 18,
-  },
+  controlsRow: { display: "flex", gap: 8, marginBottom: 18 },
   phoneInput: {
     padding: "10px 12px",
     borderRadius: 8,
     border: "1px solid #ddd",
     minWidth: 220,
-    color: "black",
   },
   refreshButton: {
     padding: "10px 14px",
@@ -354,7 +294,6 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
     fontWeight: 700,
   },
-
   errorBox: {
     background: "#ffe9e6",
     padding: 12,
@@ -362,16 +301,11 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#b00000",
     marginBottom: 12,
   },
-
   plansGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
     gap: 14,
-    alignItems: "stretch",
   },
-  loading: { padding: 20 },
-  noPlans: { padding: 10, color: "#666" },
-
   card: {
     background: "#fff",
     borderRadius: 12,
@@ -380,8 +314,6 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     flexDirection: "column",
     justifyContent: "space-between",
-    color: "black",
-    minHeight: 130,
   },
   cardHeader: {
     display: "flex",
@@ -390,7 +322,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   planName: { fontWeight: 700 },
   planPrice: { fontWeight: 800, color: ORANGE, fontSize: 18 },
-  cardBody: { marginTop: 10, color: "#444" },
+  cardBody: { marginTop: 10 },
   validity: { fontSize: 13, color: "#666" },
   features: { fontSize: 12, color: "#888", marginTop: 6 },
   cardFooter: { marginTop: 12, display: "flex", justifyContent: "flex-end" },

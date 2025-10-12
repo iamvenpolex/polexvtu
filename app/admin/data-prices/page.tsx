@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -40,10 +40,21 @@ export default function AdminDataPrices() {
     async function fetchPlans() {
       setLoading(true);
       try {
-        const res = await axios.get(`${BASE_URL}/api/vtu/plans/${productType}`);
+        const res = await axios.get<{ plans: Plan[] }>(
+          `${BASE_URL}/api/vtu/plans/${productType}`
+        );
         setPlans(res.data.plans || []);
-      } catch (err: any) {
-        console.error("fetchPlans error:", err.response?.data || err.message);
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err)) {
+          console.error(
+            "fetchPlans AxiosError:",
+            err.response?.data || err.message
+          );
+        } else if (err instanceof Error) {
+          console.error("fetchPlans Error:", err.message);
+        } else {
+          console.error("fetchPlans Unknown error:", err);
+        }
         setPlans([]);
       } finally {
         setLoading(false);
@@ -79,11 +90,17 @@ export default function AdminDataPrices() {
         status: "active",
       });
       alert("Custom price saved!");
-    } catch (err: any) {
-      console.error(
-        "saveCustomPrice error:",
-        err.response?.data || err.message
-      );
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        console.error(
+          "saveCustomPrice AxiosError:",
+          err.response?.data || err.message
+        );
+      } else if (err instanceof Error) {
+        console.error("saveCustomPrice Error:", err.message);
+      } else {
+        console.error("saveCustomPrice Unknown error:", err);
+      }
       alert("Failed to save custom price");
     } finally {
       setSavingPlanId(null);

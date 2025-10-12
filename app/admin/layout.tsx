@@ -39,6 +39,11 @@ export default function AdminLayout({
       href: "/admin/data-prices",
       icon: <Phone size={20} />,
     },
+    {
+      name: "Data Trans",
+      href: "/admin/data-transactions",
+      icon: <Phone size={20} />,
+    },
   ];
 
   return (
