@@ -96,23 +96,33 @@ export default function DataPurchasePage() {
     }
   }
 
+  function getNetworkCode(productKey?: string): string {
+    if (!productKey) return "01";
+    if (productKey.startsWith("mtn")) return "01";
+    if (productKey.startsWith("glo")) return "02";
+    if (productKey.startsWith("airtel")) return "03";
+    if (productKey.startsWith("9mobile")) return "04";
+    return "01";
+  }
+
   async function handleBuy(plan: Plan) {
-    if (!phone || phone.length < 10) {
-      alert("Enter a valid phone number");
+    if (!phone || phone.length !== 11) {
+      alert("Enter a valid 11-digit phone number");
       return;
     }
 
-    const confirmed = confirm(
-      `Buy ${plan.name} for ₦${plan.custom_price ?? plan.price}?`
-    );
-    if (!confirmed) return;
+    const price = plan.custom_price ?? plan.price;
+    const client_reference = `ref_${Date.now()}_${Math.floor(
+      Math.random() * 1000
+    )}`;
+
+    if (!confirm(`Buy ${plan.name} for ₦${price}?`)) return;
 
     try {
       setBuyingId(plan.plan_id);
 
       const token = localStorage.getItem("token");
       const user_id = localStorage.getItem("user_id");
-
       if (!user_id) {
         alert("User not logged in");
         return;
@@ -120,11 +130,13 @@ export default function DataPurchasePage() {
 
       const payload = {
         user_id,
-        network: getNetworkCodeFromProductKey(selectedProductType),
+        network: getNetworkCode(selectedProductType),
         mobile_no: phone,
         dataplan: plan.plan_id,
-        balanceType: "wallet", // use wallet balance
+        client_reference,
       };
+
+      console.log("Sending payload to backend:", payload);
 
       const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
@@ -135,11 +147,11 @@ export default function DataPurchasePage() {
         { headers }
       );
 
+      console.log("Backend response:", res.data);
+
       if (res.data.success) {
         alert(
-          `Purchase initiated!\nAmount paid: ₦${
-            plan.custom_price ?? plan.price
-          }\nReference: ${res.data.reference}`
+          `Purchase initiated!\nAmount: ₦${price}\nReference: ${res.data.reference}`
         );
       } else {
         alert(res.data.message || "Purchase may have failed.");
@@ -158,15 +170,6 @@ export default function DataPurchasePage() {
     } finally {
       setBuyingId(null);
     }
-  }
-
-  function getNetworkCodeFromProductKey(productKey?: string) {
-    if (!productKey) return "01";
-    if (productKey.startsWith("mtn")) return "01";
-    if (productKey.startsWith("glo")) return "02";
-    if (productKey.startsWith("airtel")) return "03";
-    if (productKey.startsWith("9mobile")) return "04";
-    return "01";
   }
 
   return (
@@ -267,6 +270,7 @@ export default function DataPurchasePage() {
 // ---------- Styles ----------
 const ORANGE = "#ff8a00";
 const DARK_TEXT = "#222";
+
 const styles: Record<string, React.CSSProperties> = {
   page: {
     padding: 16,
