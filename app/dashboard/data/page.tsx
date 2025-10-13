@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
@@ -83,11 +85,11 @@ const NETWORKS: Record<
   mtn: {
     label: "MTN",
     productTypes: [
-      { key: "mtn_sme", label: "SME" },
-      { key: "mtn_cg_lite", label: "CG Lite" },
       { key: "mtn_cg", label: "CG" },
       { key: "mtn_awoof", label: "Awoof" },
       { key: "mtn_gifting", label: "Gifting" },
+      { key: "mtn_sme", label: "SME" },
+      { key: "mtn_cg_lite", label: "CG Lite" },
     ],
   },
   glo: {
@@ -178,7 +180,13 @@ export default function DataPurchasePage() {
     )}`;
     const displayPrice = plan.custom_price ?? plan.price;
 
-    if (!confirm(`Buy ${plan.name} for ₦${displayPrice}?`)) return;
+    if (
+      !confirm(
+        `         PLEASE CONFIRM DETAILS BEFORE PROCEEDING
+        Buy ${plan.name} for ₦${displayPrice}? to phone number ${phone}?`
+      )
+    )
+      return;
 
     try {
       setBuyingId(plan.plan_id);
@@ -229,6 +237,15 @@ export default function DataPurchasePage() {
 
   return (
     <div style={styles.page}>
+      <div style={styles.back}>
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-2 text-sm bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition"
+        >
+          <ArrowLeft size={16} />
+          <span>Back to Dashboard</span>
+        </Link>
+      </div>
       <h1 style={styles.title}>Buy Data</h1>
 
       {/* Network buttons */}
