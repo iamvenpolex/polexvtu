@@ -5,6 +5,7 @@ import axios from "axios";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
+// ---------- Types ----------
 type Plan = {
   plan_id: string;
   name: string;
@@ -25,6 +26,56 @@ type BuyDataResponse = {
   reference?: string;
 };
 
+// ---------- Message Component ----------
+type MessageBoxProps = {
+  message: string;
+  type?: "success" | "error" | "info";
+  onClose?: () => void;
+};
+
+function MessageBox({ message, type = "info", onClose }: MessageBoxProps) {
+  const bgColor =
+    type === "success" ? "#e6f9ec" : type === "error" ? "#ffe9e6" : "#e6f0ff";
+
+  const textColor =
+    type === "success" ? "#027a36" : type === "error" ? "#b00000" : "#1a3c91";
+
+  return (
+    <div
+      style={{
+        background: bgColor,
+        color: textColor,
+        padding: "12px 16px",
+        borderRadius: 8,
+        marginBottom: 12,
+        position: "relative",
+        border: `1px solid ${textColor}`,
+      }}
+    >
+      {message}
+      {onClose && (
+        <button
+          onClick={onClose}
+          style={{
+            position: "absolute",
+            right: 8,
+            top: 8,
+            border: "none",
+            background: "transparent",
+            color: textColor,
+            fontWeight: 700,
+            cursor: "pointer",
+            fontSize: 14,
+          }}
+        >
+          ×
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ---------- Networks & Product Types ----------
 const NETWORKS: Record<
   string,
   { label: string; productTypes: { key: string; label: string }[] }
@@ -64,6 +115,7 @@ const NETWORKS: Record<
   },
 };
 
+// ---------- DataPurchasePage ----------
 export default function DataPurchasePage() {
   const [selectedNetwork, setSelectedNetwork] = useState<string>("mtn");
   const [selectedProductType, setSelectedProductType] =
@@ -73,11 +125,16 @@ export default function DataPurchasePage() {
   const [error, setError] = useState<string | null>(null);
   const [phone, setPhone] = useState("");
   const [buyingId, setBuyingId] = useState<string | null>(null);
+  const [message, setMessage] = useState<{
+    text: string;
+    type?: "success" | "error" | "info";
+  } | null>(null);
 
   useEffect(() => {
     if (selectedProductType) fetchPlans(selectedProductType);
   }, [selectedProductType]);
 
+  // ---------- Fetch Plans ----------
   async function fetchPlans(productType: string) {
     setLoadingPlans(true);
     setError(null);
@@ -96,6 +153,7 @@ export default function DataPurchasePage() {
     }
   }
 
+  // ---------- Get Network Code ----------
   function getNetworkCode(productKey?: string): string {
     if (!productKey) return "01";
     if (productKey.startsWith("mtn")) return "01";
@@ -105,17 +163,21 @@ export default function DataPurchasePage() {
     return "01";
   }
 
+  // ---------- Buy Data ----------
   async function handleBuy(plan: Plan) {
     if (!phone || phone.length !== 11) {
-      alert("Enter a valid 11-digit phone number");
+      setMessage({
+        text: "Enter a valid 11-digit phone number",
+        type: "error",
+      });
       return;
     }
 
     const client_reference = `ref_${Date.now()}_${Math.floor(
       Math.random() * 1000
     )}`;
+    const displayPrice = plan.custom_price ?? plan.price;
 
-    const displayPrice = plan.custom_price ?? plan.price; // for UI display
     if (!confirm(`Buy ${plan.name} for ₦${displayPrice}?`)) return;
 
     try {
@@ -124,21 +186,17 @@ export default function DataPurchasePage() {
       const token = localStorage.getItem("token");
       const user_id = localStorage.getItem("user_id");
       if (!user_id) {
-        alert("User not logged in");
+        setMessage({ text: "User not logged in", type: "error" });
         return;
       }
 
-      // ALWAYS use the actual plan.price for backend/EasyAccess
       const payload = {
         user_id,
         network: getNetworkCode(selectedProductType),
         mobile_no: phone,
         dataplan: plan.plan_id,
         client_reference,
-        max_amount_payable: plan.price, // <--- key fix
       };
-
-      console.log("Sending payload to backend:", payload);
 
       const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
@@ -148,27 +206,22 @@ export default function DataPurchasePage() {
         payload,
         { headers }
       );
-
       console.log("Backend response:", res.data);
 
       if (res.data.success) {
-        alert(
-          `Purchase initiated!\nAmount: ₦${displayPrice}\nReference: ${res.data.reference}`
-        );
+        setMessage({
+          text: `Purchase successful!\nAmount: ₦${displayPrice}\nReference: ${res.data.reference}`,
+          type: "success",
+        });
       } else {
-        alert(res.data.message || "Purchase may have failed.");
+        setMessage({
+          text: res.data.message || "Purchase failed",
+          type: "error",
+        });
       }
     } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        console.error("Buy error:", err.response?.data || err.message);
-        alert(err.response?.data?.message || "Purchase failed");
-      } else if (err instanceof Error) {
-        console.error("Buy error:", err.message);
-        alert(err.message);
-      } else {
-        console.error("Unknown error:", err);
-        alert("Purchase failed");
-      }
+      console.error("Buy error:", err);
+      setMessage({ text: "Purchase failed. Please try again.", type: "error" });
     } finally {
       setBuyingId(null);
     }
@@ -178,6 +231,7 @@ export default function DataPurchasePage() {
     <div style={styles.page}>
       <h1 style={styles.title}>Buy Data</h1>
 
+      {/* Network buttons */}
       <div style={styles.networkBar}>
         {Object.entries(NETWORKS).map(([key, meta]) => (
           <button
@@ -197,6 +251,7 @@ export default function DataPurchasePage() {
         ))}
       </div>
 
+      {/* Product types */}
       <div style={styles.productTypes}>
         {NETWORKS[selectedNetwork].productTypes.map((pt) => (
           <button
@@ -214,6 +269,7 @@ export default function DataPurchasePage() {
         ))}
       </div>
 
+      {/* Phone input */}
       <div style={styles.controlsRow}>
         <input
           placeholder="Enter phone number"
@@ -230,8 +286,19 @@ export default function DataPurchasePage() {
         </button>
       </div>
 
+      {/* Message box */}
+      {message && (
+        <MessageBox
+          message={message.text}
+          type={message.type}
+          onClose={() => setMessage(null)}
+        />
+      )}
+
+      {/* Error */}
       {error && <div style={styles.errorBox}>{error}</div>}
 
+      {/* Plans grid */}
       <div style={styles.plansGrid}>
         {loadingPlans ? (
           <div>Loading plans…</div>
