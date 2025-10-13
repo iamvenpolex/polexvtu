@@ -111,12 +111,12 @@ export default function DataPurchasePage() {
       return;
     }
 
-    const price = plan.custom_price ?? plan.price;
     const client_reference = `ref_${Date.now()}_${Math.floor(
       Math.random() * 1000
     )}`;
 
-    if (!confirm(`Buy ${plan.name} for ₦${price}?`)) return;
+    const displayPrice = plan.custom_price ?? plan.price; // for UI display
+    if (!confirm(`Buy ${plan.name} for ₦${displayPrice}?`)) return;
 
     try {
       setBuyingId(plan.plan_id);
@@ -128,12 +128,14 @@ export default function DataPurchasePage() {
         return;
       }
 
+      // ALWAYS use the actual plan.price for backend/EasyAccess
       const payload = {
         user_id,
         network: getNetworkCode(selectedProductType),
         mobile_no: phone,
         dataplan: plan.plan_id,
         client_reference,
+        max_amount_payable: plan.price, // <--- key fix
       };
 
       console.log("Sending payload to backend:", payload);
@@ -151,7 +153,7 @@ export default function DataPurchasePage() {
 
       if (res.data.success) {
         alert(
-          `Purchase initiated!\nAmount: ₦${price}\nReference: ${res.data.reference}`
+          `Purchase initiated!\nAmount: ₦${displayPrice}\nReference: ${res.data.reference}`
         );
       } else {
         alert(res.data.message || "Purchase may have failed.");
