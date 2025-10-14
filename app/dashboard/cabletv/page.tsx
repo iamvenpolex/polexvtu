@@ -16,36 +16,23 @@ type Plan = {
   validity: string;
 };
 
-type PlansResponse = {
-  success: boolean;
-  plans: Plan[];
-  message?: string;
-};
-
 type VerifiedAccount = {
   account_name: string;
   status: string;
   iucno?: string;
+  due_date?: string;
+  bouquet?: string;
   [key: string]: string | undefined;
-};
-
-type VerifyResponse = {
-  success: boolean;
-  data?: VerifiedAccount;
-  message?: string;
-};
-
-// Replace 'any' with string | number | undefined
-type BuyCableData = {
-  transaction_id?: string;
-  amount?: number;
-  reference?: string;
-  [key: string]: string | number | undefined;
 };
 
 type BuyCableResponse = {
   success: boolean;
-  data?: BuyCableData;
+  data?: {
+    transaction_id?: string;
+    amount?: number;
+    reference?: string;
+    [key: string]: unknown; // <-- replaced `any` with `unknown`
+  };
   message?: string;
 };
 
@@ -130,10 +117,10 @@ export default function CableTVPage() {
     setMessage(null);
     try {
       const token = localStorage.getItem("token") || "";
-      const res = await axios.get<PlansResponse>(
-        `${BASE_URL}/api/cabletv/${company}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const res = await axios.get(`${BASE_URL}/api/cabletv/${company}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
       if (res.data.success) {
         setPlans(res.data.plans);
       } else {
@@ -163,19 +150,30 @@ export default function CableTVPage() {
       const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      const res = await axios.post<VerifyResponse>(
+      const res = await axios.post(
         `${BASE_URL}/api/buycabletv/verify`,
         { company: selectedCompany, iucno: iuc },
         { headers }
       );
 
-      if (res.data.success && res.data.data) {
-        setVerifyResult(res.data.data);
+      const successFlag = res.data.success === true;
+      const content = res.data.data as Record<string, string> | undefined;
+
+      if (successFlag && content?.Status === "ACTIVE") {
+        setVerifyResult({
+          account_name: content.Customer_Name ?? "N/A",
+          status: content.Status,
+          iucno: iuc,
+          due_date: content.Due_Date,
+          bouquet: content.Current_Bouquet ?? "N/A",
+        });
         setMessage({ text: "Verification successful", type: "success" });
       } else {
         setVerifyResult(null);
         setMessage({
-          text: res.data.message || "Verification failed",
+          text: content?.Status
+            ? `Verification failed: ${content.Status}`
+            : res.data.message || "Verification failed",
           type: "error",
         });
       }
@@ -229,7 +227,7 @@ export default function CableTVPage() {
 
       if (res.data.success) {
         setMessage({
-          text: `Purchase successful! Reference: ${res.data.data?.transaction_id}`,
+          text: `Purchase successful! Reference: ${res.data.data?.reference}`,
           type: "success",
         });
       } else {
@@ -298,10 +296,15 @@ export default function CableTVPage() {
 
       {/* Verification Result */}
       {verifyResult && (
-        <div style={styles.verifyResult} className="text-black">
-          <strong>Account Name:</strong> {verifyResult.account_name || "N/A"}{" "}
-          <br />
-          <strong>Status:</strong> {verifyResult.status || "N/A"} <br />
+        <div style={styles.verifyResult} className="text-green-800">
+          <strong className="text-orange-600">Account Name:</strong>{" "}
+          {verifyResult.account_name || "N/A"} <br />
+          <strong className="text-orange-600">Status:</strong>{" "}
+          {verifyResult.status || "N/A"} <br />
+          <strong className="text-orange-600">Due Date:</strong>{" "}
+          {verifyResult.due_date || "N/A"} <br />
+          <strong className="text-orange-600">Bouquet:</strong>{" "}
+          {verifyResult.bouquet || "N/A"} <br />
         </div>
       )}
 
@@ -413,42 +416,43 @@ const styles: Record<string, React.CSSProperties> = {
   },
   plansGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-    gap: 14,
+    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+    gap: 12,
   },
   card: {
-    background: "#fff",
     borderRadius: 12,
-    padding: 14,
-    boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
+    border: "1px solid #ddd",
+    padding: 12,
     display: "flex",
     flexDirection: "column",
     justifyContent: "space-between",
-    color: DARK_TEXT,
+    background: "#fff",
   },
   cardHeader: {
+    marginBottom: 6,
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
   },
   planName: { fontWeight: 700, fontSize: 14, color: DARK_TEXT },
-  planPrice: { fontWeight: 800, color: ORANGE, fontSize: 16 },
-  cardBody: { marginTop: 8, fontSize: 13 },
-  cardFooter: { marginTop: 10, display: "flex", justifyContent: "flex-end" },
+  planPrice: { fontWeight: 700, color: ORANGE },
+  cardBody: { fontSize: 12, color: "#555", marginBottom: 6 },
+  cardFooter: {},
   buyButton: {
+    padding: "6px 12px",
+    borderRadius: 8,
+    border: "none",
     background: ORANGE,
     color: "#fff",
-    border: "none",
-    padding: "8px 12px",
-    borderRadius: 8,
-    fontWeight: 700,
+    fontWeight: 600,
     cursor: "pointer",
-    fontSize: 14,
+    width: "100%",
   },
   verifyResult: {
-    background: "#f0f0f0",
+    border: "1px solid #ccc",
+    borderRadius: 10,
     padding: 12,
-    borderRadius: 8,
     marginBottom: 12,
+    background: "#f9f9f9",
+    fontSize: 13,
   },
 };
