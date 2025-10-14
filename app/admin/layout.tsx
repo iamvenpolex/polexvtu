@@ -44,6 +44,11 @@ export default function AdminLayout({
       href: "/admin/data-transactions",
       icon: <Phone size={20} />,
     },
+    {
+      name: "CABLE PRICES",
+      href: "/admin/cabletv-prices",
+      icon: <Phone size={20} />,
+    },
   ];
 
   return (
