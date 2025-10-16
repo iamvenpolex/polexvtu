@@ -35,18 +35,19 @@ export default function AdminLayout({
       icon: <BarChart2 size={20} />,
     },
     {
-      name: "Data",
+      name: "DATA PRICES",
       href: "/admin/data-prices",
       icon: <Phone size={20} />,
     },
-    {
-      name: "Data Trans",
-      href: "/admin/data-transactions",
-      icon: <Phone size={20} />,
-    },
+
     {
       name: "CABLE PRICES",
       href: "/admin/cabletv-prices",
+      icon: <Phone size={20} />,
+    },
+    {
+      name: "EDUCATION PRICES",
+      href: "/admin/education-prices",
       icon: <Phone size={20} />,
     },
   ];

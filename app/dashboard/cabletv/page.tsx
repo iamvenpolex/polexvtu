@@ -31,7 +31,7 @@ type BuyCableResponse = {
     transaction_id?: string;
     amount?: number;
     reference?: string;
-    [key: string]: unknown; // <-- replaced `any` with `unknown`
+    [key: string]: unknown;
   };
   message?: string;
 };
@@ -99,6 +99,7 @@ export default function CableTVPage() {
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [iuc, setIuc] = useState("");
   const [buyingId, setBuyingId] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(false); // ✅ added verifying state
   const [verifyResult, setVerifyResult] = useState<VerifiedAccount | null>(
     null
   );
@@ -144,15 +145,21 @@ export default function CableTVPage() {
       setMessage({ text: "Please enter your IUC number", type: "error" });
       return;
     }
+
+    setVerifying(true); // ✅ start verifying
+    setMessage(null);
+
     try {
-      setMessage(null);
       const token = localStorage.getItem("token");
       const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
       const res = await axios.post(
         `${BASE_URL}/api/buycabletv/verify`,
-        { company: selectedCompany, iucno: iuc },
+        {
+          company: selectedCompany,
+          iucno: iuc,
+        },
         { headers }
       );
 
@@ -181,6 +188,8 @@ export default function CableTVPage() {
       console.error(err);
       setVerifyResult(null);
       setMessage({ text: "Verification failed. Try again.", type: "error" });
+    } finally {
+      setVerifying(false); // ✅ done verifying
     }
   }
 
@@ -282,8 +291,12 @@ export default function CableTVPage() {
           onChange={(e) => setIuc(e.target.value)}
           style={styles.phoneInput}
         />
-        <button onClick={handleVerify} style={styles.verifyButton}>
-          Verify
+        <button
+          onClick={handleVerify}
+          style={styles.verifyButton}
+          disabled={verifying} // ✅ disable while verifying
+        >
+          {verifying ? "Verifying..." : "Verify"} {/* ✅ show state */}
         </button>
         <button
           onClick={() => fetchPlans(selectedCompany)}

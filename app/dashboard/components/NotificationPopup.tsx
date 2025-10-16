@@ -35,7 +35,9 @@ export default function NotificationPopup({
           Hi, {firstName}! 👋
         </h2>
         <p className="text-gray-600 mb-6">
-          Welcome back! We&apos;re glad to have you on your dashboard.
+          Welcome back! We&apos;re glad to have you on your dashboard. <br>Airtime
+          and Betting services are currently unavailable. We’re working to
+          restore them as soon as possible. Thank you for your patience 🙏
         </p>
         <button
           onClick={() => setShow(false)}

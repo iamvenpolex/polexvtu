@@ -25,6 +25,15 @@ export default function DashboardNotificationsPage() {
         // Example static data (replace with backend API later)
         const data: Notification[] = [
           {
+            id: 4,
+            type: "warning",
+            title: "Service Notice",
+            message:
+              "Airtime and Betting services are currently unavailable. We’re working to restore them as soon as possible. Thank you for your patience.🙏",
+            date: "Oct 16, 2025",
+          },
+
+          {
             id: 1,
             type: "info",
             title: "System Update",
