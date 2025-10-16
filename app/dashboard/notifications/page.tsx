@@ -38,15 +38,15 @@ export default function DashboardNotificationsPage() {
             type: "info",
             title: "System Update",
             message: "We added new data bundles to all networks.",
-            date: "Oct 9, 2025",
+            date: "Oct 16, 2025",
           },
-          {
-            id: 2,
-            type: "success",
-            title: "Referral Reward",
-            message: "You earned ₦200 from your referral bonus!",
-            date: "Oct 8, 2025",
-          },
+          // {
+          //   id: 2,
+          //   type: "success",
+          //   title: "Referral Reward",
+          //   message: "You earned ₦200 from your referral bonus!",
+          //   date: "Oct 8, 2025",
+          // },
           {
             id: 3,
             type: "warning",
