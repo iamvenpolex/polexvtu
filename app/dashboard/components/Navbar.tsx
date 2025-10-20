@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Bell, User, LogOut, HelpCircle, Settings } from "lucide-react";
 import Link from "next/link";
-import ComingSoonTag from "@/components/ComingSoonTag";
+
 import { useAuth } from "@/context/AuthContext"; // ✅ import context
 
 export default function Navbar() {
@@ -83,7 +83,6 @@ export default function Navbar() {
                   <Settings size={18} className="flex-shrink-0" />
                   <span className="flex items-center gap-2">
                     Account Settings
-                    <ComingSoonTag size="sm" />
                   </span>
                 </Link>
 
