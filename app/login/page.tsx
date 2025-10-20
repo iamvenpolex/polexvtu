@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
@@ -12,12 +12,12 @@ type LoginResponse = {
   token: string;
   firstName: string;
   email: string;
-  user_id: number; // <-- added user_id
+  user_id: number;
 };
 
 export default function LoginPage() {
   const router = useRouter();
-  const [identifier, setIdentifier] = useState(""); // Email or phone
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -27,40 +27,73 @@ export default function LoginPage() {
     process.env.NEXT_PUBLIC_API_BASE_URL ||
     "https://polexvtu-backend-production.up.railway.app";
 
+  // ✅ Wake up the backend server silently on page load
+  useEffect(() => {
+    const wakeServer = async () => {
+      try {
+        await axios.get(`${API_BASE_URL}/ping`);
+      } catch {
+        // Ignore wakeup errors
+      }
+    };
+    wakeServer();
+  }, [API_BASE_URL]);
+
+  // ✅ Function to attempt login (used in retry)
+  const attemptLogin = async (): Promise<boolean> => {
+    try {
+      const res = await axios.post<LoginResponse>(
+        `${API_BASE_URL}/api/auth/login`,
+        { identifier, password },
+        { timeout: 8000 }
+      );
+
+      const { token, firstName, email, user_id } = res.data;
+      localStorage.setItem("token", token);
+      localStorage.setItem("firstName", firstName);
+      localStorage.setItem("email", email);
+      localStorage.setItem("user_id", String(user_id));
+
+      setMessage("✅ Login successful!");
+      router.push("/dashboard");
+      return true;
+    } catch (err) {
+      if (axios.isAxiosError(err)) {
+        if (
+          err.code === "ECONNABORTED" ||
+          err.message.includes("Network Error")
+        ) {
+          return false; // Backend might be waking up
+        }
+        setMessage(err.response?.data?.message || "❌ Login failed");
+      } else {
+        setMessage("❌ Something went wrong");
+      }
+      return false;
+    }
+  };
+
+  // ✅ Handle login with retry if server is sleeping
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
 
-    try {
-      const res = await axios.post<LoginResponse>(
-        `${API_BASE_URL}/api/auth/login`,
-        {
-          identifier,
-          password,
-        }
-      );
+    let success = await attemptLogin();
+    let retryCount = 0;
 
-      const { token, firstName, email, user_id } = res.data;
-
-      localStorage.setItem("token", token);
-      localStorage.setItem("firstName", firstName);
-      localStorage.setItem("email", email);
-      localStorage.setItem("user_id", String(user_id)); // ✅ fixed
-
-      setMessage("✅ Login successful!");
-      router.push("/dashboard");
-    } catch (err: unknown) {
-      if (axios.isAxiosError(err)) {
-        setMessage(err.response?.data?.message || "❌ Login failed");
-      } else if (err instanceof Error) {
-        setMessage("❌ " + err.message);
-      } else {
-        setMessage("❌ Something went wrong");
-      }
-    } finally {
-      setLoading(false);
+    while (!success && retryCount < 5) {
+      // Retry every 3 seconds
+      await new Promise((r) => setTimeout(r, 3000));
+      retryCount++;
+      success = await attemptLogin();
     }
+
+    if (!success && retryCount >= 5) {
+      setMessage("⚙️ Server still waking up, please try again shortly.");
+    }
+
+    setLoading(false);
   };
 
   return (
@@ -118,7 +151,11 @@ export default function LoginPage() {
             {message && (
               <p
                 className={`text-center text-sm ${
-                  message.startsWith("✅") ? "text-green-600" : "text-red-600"
+                  message.startsWith("✅")
+                    ? "text-green-600"
+                    : message.startsWith("⚙️")
+                    ? "text-yellow-600"
+                    : "text-red-600"
                 }`}
               >
                 {message}
@@ -136,6 +173,15 @@ export default function LoginPage() {
           </form>
 
           <p className="mt-4 text-center text-sm text-gray-600">
+            <a
+              href="/forgot-password"
+              className="text-blue-600 font-semibold hover:underline"
+            >
+              Forgot Password?
+            </a>
+          </p>
+
+          <p className="mt-2 text-center text-sm text-gray-600">
             Don&apos;t have an account?{" "}
             <a
               href="/register"

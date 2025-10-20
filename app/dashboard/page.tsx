@@ -186,13 +186,13 @@ export default function DashboardPage() {
             Services
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-            <Link
+            {/* <Link
               href="/dashboard/airtime"
               className="flex flex-col items-center gap-1 sm:gap-2 bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow transition text-xs sm:text-sm"
             >
               <Phone className="w-5 h-5 sm:w-6 sm:h-6" />
               Airtime
-            </Link>
+            </Link> */}
             <Link
               href="/dashboard/data"
               className="flex flex-col items-center gap-1 sm:gap-2 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow transition text-xs sm:text-sm"
@@ -221,13 +221,13 @@ export default function DashboardPage() {
               <Tv className="w-5 h-5 sm:w-6 sm:h-6" />
               Cable TV
             </Link>
-            <Link
+            {/* <Link
               href="/dashboard/betting"
               className="flex flex-col items-center gap-1 sm:gap-2 bg-green-500 hover:bg-green-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow transition text-xs sm:text-sm"
             >
               <Gamepad2 className="w-5 h-5 sm:w-6 sm:h-6" />
               Betting
-            </Link>
+            </Link> */}
           </div>
         </div>
       </div>

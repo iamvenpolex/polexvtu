@@ -121,7 +121,7 @@ const NETWORKS: Record<
 export default function DataPurchasePage() {
   const [selectedNetwork, setSelectedNetwork] = useState<string>("mtn");
   const [selectedProductType, setSelectedProductType] =
-    useState<string>("mtn_sme");
+    useState<string>("mtn_gifting");
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [error, setError] = useState<string | null>(null);
