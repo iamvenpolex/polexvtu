@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import axios from "axios";
-import { Lock } from "lucide-react";
+import { Lock, Check, X, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -13,11 +13,25 @@ export default function ResetPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const router = useRouter();
 
   const API_BASE_URL =
     process.env.NEXT_PUBLIC_API_BASE_URL ||
     "https://polexvtu-backend-production.up.railway.app";
+
+  // Password rules
+  const passwordRules = [
+    { label: "At least 8 characters", test: /.{8,}/ },
+    { label: "At least one uppercase letter", test: /[A-Z]/ },
+    { label: "At least one lowercase letter", test: /[a-z]/ },
+    { label: "At least one number", test: /\d/ },
+    {
+      label: "At least one special character (@$!%*?&._-)",
+      test: /[@$!%*?&._-]/,
+    },
+  ];
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -39,12 +53,26 @@ export default function ResetPasswordPage() {
       return;
     }
 
+    // Strong password validation
+    const strongPasswordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&._-]).{8,}$/;
+    if (!strongPasswordRegex.test(newPassword)) {
+      setMessage(
+        "❌ Password must include uppercase, lowercase, number, special character, and be at least 8 characters long."
+      );
+      setLoading(false);
+      return;
+    }
+
     try {
-      const res = await axios.post(`${API_BASE_URL}/api/reset-password`, {
-        emailOrPhone: email,
-        code,
-        newPassword,
-      });
+      const res = await axios.post(
+        `${API_BASE_URL}/api/forgot-password/reset-password`,
+        {
+          emailOrPhone: email,
+          code,
+          newPassword,
+        }
+      );
 
       setMessage(res.data.message);
 
@@ -92,26 +120,70 @@ export default function ResetPasswordPage() {
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="New password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 required
                 className="w-full pl-10 pr-4 py-2 border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
+
+            {/* Password Strength Checklist */}
+            {newPassword.length > 0 && (
+              <div className="mt-2 bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm">
+                <p className="text-gray-700 font-semibold mb-2">
+                  Password must contain:
+                </p>
+                <ul className="space-y-1">
+                  {passwordRules.map((rule, index) => {
+                    const valid = rule.test.test(newPassword);
+                    return (
+                      <li key={index} className="flex items-center gap-2">
+                        {valid ? (
+                          <Check className="text-green-500 w-4 h-4" />
+                        ) : (
+                          <X className="text-red-500 w-4 h-4" />
+                        )}
+                        <span
+                          className={`${
+                            valid ? "text-green-600" : "text-gray-700"
+                          }`}
+                        >
+                          {rule.label}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
 
             {/* Confirm Password */}
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
-                type="password"
+                type={showConfirm ? "text" : "password"}
                 placeholder="Confirm new password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 className="w-full pl-10 pr-4 py-2 border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
               />
+              <button
+                type="button"
+                onClick={() => setShowConfirm(!showConfirm)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
 
             {/* Message */}

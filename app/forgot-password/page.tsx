@@ -6,8 +6,11 @@ import { Mail } from "lucide-react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { useRouter } from "next/navigation"; // ✅ Import router
 
 export default function ForgotPasswordPage() {
+  const router = useRouter(); // ✅ Initialize router
+
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -25,16 +28,24 @@ export default function ForgotPasswordPage() {
       const res = await axios.post(
         `${API_BASE_URL}/api/forgot-password/request-reset`,
         {
-          emailOrPhone: email, // Backend expects "emailOrPhone"
+          emailOrPhone: email,
         }
       );
 
-      setMessage(res.data.message || "✅ Reset code sent to your email.");
+      if (res.data.success) {
+        // ✅ Save email for next step
+        localStorage.setItem("resetEmail", email);
+
+        // ✅ Redirect to verify code page
+        router.push("/verify-code");
+      } else {
+        setMessage(res.data.message || "❌ Failed to send reset code.");
+      }
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setMessage(
           err.response?.data?.message ||
-            "❌ Failed to send reset link. Try again."
+            "❌ Failed to send reset code. Try again."
         );
       } else {
         setMessage("❌ Something went wrong. Please try again.");

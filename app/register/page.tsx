@@ -13,6 +13,8 @@ import {
   Gift,
   Eye,
   EyeOff,
+  Check,
+  X,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -39,12 +41,34 @@ export default function RegisterPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Password rules
+  const passwordRules = [
+    { label: "At least 8 characters", test: /.{8,}/ },
+    { label: "At least one uppercase letter", test: /[A-Z]/ },
+    { label: "At least one lowercase letter", test: /[a-z]/ },
+    { label: "At least one number", test: /\d/ },
+    {
+      label: "At least one special character (@$!%*?&._-)",
+      test: /[@$!%*?&._-]/,
+    },
+  ];
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage("");
 
     if (formData.password !== formData.confirmPassword) {
       setMessage("❌ Passwords do not match");
+      return;
+    }
+
+    // Strong password validation
+    const strongPasswordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&._-]).{8,}$/;
+    if (!strongPasswordRegex.test(formData.password)) {
+      setMessage(
+        "❌ Password must include uppercase, lowercase, number, special character, and be at least 8 characters long."
+      );
       return;
     }
 
@@ -63,19 +87,13 @@ export default function RegisterPage() {
 
       if (!res.ok) throw new Error(data.message || "Registration failed");
 
-      // Store JWT token in localStorage
       localStorage.setItem("token", data.token);
-
       setMessage("✅ Registration successful! Redirecting…");
 
-      // Redirect to dashboard after short delay
       setTimeout(() => router.push("/login"), 1000);
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        setMessage("❌ " + error.message);
-      } else {
-        setMessage("❌ Something went wrong");
-      }
+      if (error instanceof Error) setMessage("❌ " + error.message);
+      else setMessage("❌ Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -192,28 +210,60 @@ export default function RegisterPage() {
               </div>
 
               {/* Password */}
-              <div className="flex items-center border rounded-lg px-3 py-2">
-                <Lock className="text-gray-400 w-5 h-5 mr-2" />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  placeholder="••••••••"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                  className="w-full bg-transparent outline-none text-gray-800"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="ml-2 text-gray-500 hover:text-gray-700"
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
+              <div className="md:col-span-2">
+                <div className="flex items-center border rounded-lg px-3 py-2">
+                  <Lock className="text-gray-400 w-5 h-5 mr-2" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    placeholder="Create Password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                    className="w-full bg-transparent outline-none text-gray-800"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="ml-2 text-gray-500 hover:text-gray-700"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+
+                {/* Password Strength Checklist (visible only when typing) */}
+                {formData.password.length > 0 && (
+                  <div className="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm">
+                    <p className="text-gray-700 font-semibold mb-2">
+                      Password must contain:
+                    </p>
+                    <ul className="space-y-1">
+                      {passwordRules.map((rule, index) => {
+                        const valid = rule.test.test(formData.password);
+                        return (
+                          <li key={index} className="flex items-center gap-2">
+                            {valid ? (
+                              <Check className="text-green-500 w-4 h-4" />
+                            ) : (
+                              <X className="text-red-500 w-4 h-4" />
+                            )}
+                            <span
+                              className={`${
+                                valid ? "text-green-600" : "text-gray-700"
+                              }`}
+                            >
+                              {rule.label}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
               </div>
 
               {/* Confirm Password */}
-              <div className="flex items-center border rounded-lg px-3 py-2">
+              <div className="flex items-center border rounded-lg px-3 py-2 md:col-span-2">
                 <Lock className="text-gray-400 w-5 h-5 mr-2" />
                 <input
                   type={showConfirm ? "text" : "password"}

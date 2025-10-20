@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { KeyRound } from "lucide-react";
 import { motion } from "framer-motion";
@@ -19,19 +19,32 @@ export default function VerifyCodePage() {
     process.env.NEXT_PUBLIC_API_BASE_URL ||
     "https://polexvtu-backend-production.up.railway.app";
 
+  // ✅ Automatically get email from localStorage
+  useEffect(() => {
+    const storedEmail = localStorage.getItem("resetEmail");
+    if (storedEmail) {
+      setEmail(storedEmail);
+    } else {
+      // If user visits page directly, redirect back
+      router.push("/forgot-password");
+    }
+  }, [router]);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
 
     try {
-      const res = await axios.post(`${API_BASE_URL}/api/verify-code`, {
-        emailOrPhone: email,
-        code,
-      });
+      const res = await axios.post(
+        `${API_BASE_URL}/api/forgot-password/verify-code`,
+        {
+          emailOrPhone: email,
+          code,
+        }
+      );
 
       if (res.data.success) {
-        localStorage.setItem("resetEmail", email);
         localStorage.setItem("resetCode", code);
         router.push("/reset-password");
       }
@@ -70,17 +83,15 @@ export default function VerifyCodePage() {
           </p>
 
           <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-            {/* Email */}
+            {/* Email (readonly) */}
             <input
               type="email"
-              placeholder="Enter your email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full pl-4 pr-4 py-2 border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
+              readOnly
+              className="w-full pl-4 pr-4 py-2 border bg-gray-100 text-black border-gray-300 rounded-lg"
             />
 
-            {/* Code */}
+            {/* Code input */}
             <div className="relative">
               <KeyRound className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
@@ -104,7 +115,7 @@ export default function VerifyCodePage() {
               </p>
             )}
 
-            {/* Submit */}
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
