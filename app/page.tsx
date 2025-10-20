@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import About from "@/components/About";
 import FAQ from "@/components/Faqsection";
 import Contact from "@/components/Contact";
+import Pricing from "@/components/Pricing";
 
 export default function Home() {
   return (
@@ -84,6 +85,9 @@ export default function Home() {
 
       {/* Features Section */}
       <Features />
+
+      {/*Pricing */}
+      <Pricing />
 
       {/*About US */}
       <About />

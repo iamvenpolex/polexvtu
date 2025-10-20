@@ -84,7 +84,7 @@ export default function Navbar() {
               {link.name}
             </a>
           </li>
-        ))}
+        ))}z
       </ul>
 
       {/* Desktop Login/Register */}
