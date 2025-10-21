@@ -95,9 +95,11 @@ export default function Features() {
               <p className="mt-1 text-gray-600 text-xs sm:text-sm">
                 {feature.desc}
               </p>
-              <button className="mt-4 sm:mt-5 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-sm sm:text-base px-4 sm:px-6 py-2 rounded-lg transition">
-                {feature.btn}
-              </button>
+              <a href="/login">
+                <button className="mt-4 sm:mt-5 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-sm sm:text-base px-4 sm:px-6 py-2 rounded-lg transition">
+                  {feature.btn}
+                </button>
+              </a>
             </motion.div>
           ))}
         </div>
@@ -145,7 +147,7 @@ export default function Features() {
                 {product.title}
               </h4>
               <p className="text-gray-600 text-xs sm:text-sm">{product.desc}</p>
-              <a href="/dashboard">
+              <a href="/login">
                 <button className="mt-4 sm:mt-5 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-sm sm:text-base px-4 sm:px-6 py-2 rounded-lg transition">
                   Buy Now @{product.price}
                 </button>
