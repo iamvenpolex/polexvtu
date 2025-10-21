@@ -160,9 +160,12 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* ---------------- Fund & Withdraw ---------------- */}
+        {/* ---------------- Fund Wallet Section ---------------- */}
         <div className="bg-white rounded-xl shadow-md p-3 sm:p-6">
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          <h2 className="text-sm sm:text-base font-semibold text-gray-700 mb-2">
+            Fund Wallet
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <Link
               href="/dashboard/wallet/fund"
               className="flex flex-col items-center justify-center gap-1 sm:gap-2 bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow text-xs sm:text-sm"
@@ -170,12 +173,40 @@ export default function DashboardPage() {
               <ArrowDownToLine size={18} />
               Fund Wallet
             </Link>
+          </div>
+        </div>
+
+        {/* ---------------- Withdraw / Reward Section ---------------- */}
+        <div className="bg-white rounded-xl shadow-md p-3 sm:p-6">
+          <h2 className="text-sm sm:text-base font-semibold text-gray-700 mb-2">
+            Withdraw / Reward
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+            {/* Transfer / Withdraw Button */}
             <Link
-              href="/dashboard/wallet/withdraw"
+              href="/dashboard/wallet/withdraw/wallet-tapam"
               className="flex flex-col items-center justify-center gap-1 sm:gap-2 bg-gray-700 hover:bg-gray-800 text-white font-medium py-2 sm:py-4 rounded-lg shadow text-xs sm:text-sm"
             >
               <ArrowUpToLine size={18} />
-              Withdraw
+              Transfer
+            </Link>
+
+            {/* Reward to Wallet Button */}
+            <Link
+              href="/dashboard/wallet/withdraw/reward-wallet"
+              className="flex flex-col items-center justify-center gap-1 sm:gap-2 bg-green-500 hover:bg-green-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow text-xs sm:text-sm"
+            >
+              <Gift size={18} />
+              Reward to Wallet
+            </Link>
+
+            {/* View History Button - left on small, center on larger screens */}
+            <Link
+              href="/dashboard/tapamhistory"
+              className="flex items-center justify-center gap-1 sm:gap-2 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow text-xs sm:text-sm col-span-2 sm:col-span-1 sm:justify-center"
+            >
+              <ArrowDownToLine size={18} />
+              View History
             </Link>
           </div>
         </div>
@@ -186,13 +217,6 @@ export default function DashboardPage() {
             Services
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-            {/* <Link
-              href="/dashboard/airtime"
-              className="flex flex-col items-center gap-1 sm:gap-2 bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow transition text-xs sm:text-sm"
-            >
-              <Phone className="w-5 h-5 sm:w-6 sm:h-6" />
-              Airtime
-            </Link> */}
             <Link
               href="/dashboard/data"
               className="flex flex-col items-center gap-1 sm:gap-2 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow transition text-xs sm:text-sm"
@@ -221,13 +245,6 @@ export default function DashboardPage() {
               <Tv className="w-5 h-5 sm:w-6 sm:h-6" />
               Cable TV
             </Link>
-            {/* <Link
-              href="/dashboard/betting"
-              className="flex flex-col items-center gap-1 sm:gap-2 bg-green-500 hover:bg-green-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow transition text-xs sm:text-sm"
-            >
-              <Gamepad2 className="w-5 h-5 sm:w-6 sm:h-6" />
-              Betting
-            </Link> */}
           </div>
         </div>
       </div>

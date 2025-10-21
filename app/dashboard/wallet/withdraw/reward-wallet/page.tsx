@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import axios from "axios";
 import RewardToWalletForm from "@/app/dashboard/wallet/withdraw/reward-wallet/RewardToWalletForm/page";
+
 import Link from "next/link";
-import { LayoutDashboard } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 export default function RewardWalletPage() {
   const [amount, setAmount] = useState(""); // ✅ start empty
@@ -89,13 +90,13 @@ export default function RewardWalletPage() {
   return (
     <div className="min-h-screen bg-gray-100 p-4 sm:p-6">
       {/* Sticky Back to Dashboard */}
-      <div className="bg-gray-50 border-b px-4 py-2 sticky top-16 z-40 rounded-t-xl">
+      <div className="mb-8">
         <Link
-          href="/dashboard/wallet/withdraw"
-          className="flex items-center gap-2 text-orange-500 hover:text-orange-600 font-semibold text-sm sm:text-base"
+          href="/dashboard"
+          className="inline-flex items-center gap-2 text-sm bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition"
         >
-          <LayoutDashboard size={18} />
-          Back to Withdraw
+          <ArrowLeft size={16} />
+          <span>Back to Dashboard</span>
         </Link>
       </div>
 

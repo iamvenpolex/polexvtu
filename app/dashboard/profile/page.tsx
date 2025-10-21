@@ -12,6 +12,7 @@ interface User {
   email: string;
   balance: number;
   reward: number;
+  phone: number;
 }
 
 // Use environment variable
@@ -71,7 +72,7 @@ export default function ReadOnlyProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 sm:p-6">
+    <div className="min-h-screen bg-gray-100 p-1 sm:p-6">
       <div className="max-w-lg sm:max-w-2xl mx-auto space-y-6">
         <div>
           <Link
@@ -110,6 +111,12 @@ export default function ReadOnlyProfilePage() {
               <p className="text-gray-500 text-sm">Email</p>
               <p className="text-gray-800 font-medium break-words">
                 {user.email}
+              </p>
+            </div>
+            <div>
+              <p className="text-gray-500 text-sm">Phone Number</p>
+              <p className="text-gray-800 font-medium break-words">
+                {user.phone}
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">

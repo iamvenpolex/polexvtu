@@ -13,7 +13,7 @@ export interface UserTransaction {
 }
 
 interface TransactionTableProps {
-  transactions?: UserTransaction[]; // ✅ optional now
+  transactions?: UserTransaction[];
   currentPage: number;
   transactionsPerPage: number;
   totalPages: number;
@@ -22,7 +22,7 @@ interface TransactionTableProps {
 }
 
 export default function TransactionTable({
-  transactions = [], // ✅ default to empty array
+  transactions = [],
   currentPage,
   transactionsPerPage,
   totalPages,
@@ -31,20 +31,18 @@ export default function TransactionTable({
 }: TransactionTableProps) {
   const indexOfLastTx = currentPage * transactionsPerPage;
   const indexOfFirstTx = indexOfLastTx - transactionsPerPage;
-
-  // ✅ safe slice
   const currentTransactions = transactions.slice(indexOfFirstTx, indexOfLastTx);
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "success":
-        return "text-green-600";
+        return "bg-green-100 text-green-800";
       case "pending":
-        return "text-yellow-600";
+        return "bg-yellow-100 text-yellow-800";
       case "failed":
-        return "text-red-600";
+        return "bg-red-100 text-red-800";
       default:
-        return "text-gray-600";
+        return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -56,82 +54,73 @@ export default function TransactionTable({
   };
 
   return (
-    <div className="bg-white p-4 sm:p-6 rounded-xl shadow-md">
-      <h2 className="text-xl font-semibold mb-4 text-gray-800">
+    <div className="p-4 sm:p-6 bg-white rounded-xl shadow-md">
+      <h2 className="text-xl font-semibold mb-4 text-gray-800 text-center">
         Transaction History
       </h2>
 
-      {transactions.length === 0 ? (
-        <p className="text-gray-500">No transactions found.</p>
-      ) : (
-        <>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b">
-                  <th className="py-2 px-3 text-gray-600 text-sm">Reference</th>
-                  <th className="py-2 px-3 text-gray-600 text-sm">Amount</th>
-                  <th className="py-2 px-3 text-gray-600 text-sm">Type</th>
-                  <th className="py-2 px-3 text-gray-600 text-sm">Status</th>
-                  <th className="py-2 px-3 text-gray-600 text-sm">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentTransactions.map((tx) => (
-                  <tr key={tx.id} className="border-b hover:bg-gray-50">
-                    <td
-                      className="py-2 px-3 text-black text-sm flex items-center gap-2 cursor-pointer"
-                      onClick={() => copyToClipboard(tx.reference)}
-                    >
-                      {tx.reference} <Copy size={14} />
-                    </td>
-                    <td
-                      className={`py-2 px-3 text-sm font-medium ${
-                        tx.isCredit ? "text-green-600" : "text-red-600"
-                      }`}
-                    >
-                      {tx.isCredit ? "+" : "-"}₦{tx.amount.toLocaleString()}
-                    </td>
-                    <td className="py-2 px-3 text-sm text-black capitalize">
-                      {tx.type}
-                    </td>
-                    <td
-                      className={`py-2 px-3 text-sm font-semibold ${getStatusColor(
-                        tx.status
-                      )} capitalize`}
-                    >
-                      {tx.status}
-                    </td>
-                    <td className="py-2 px-3 text-sm text-black">
-                      {new Date(tx.created_at).toLocaleString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+      <div className="space-y-3">
+        {currentTransactions.map((tx) => (
+          <div
+            key={tx.id}
+            className="p-4 rounded-lg shadow-sm border border-gray-200 bg-gray-50 flex flex-wrap justify-between items-start"
+          >
+            <div className="w-full sm:w-2/5">
+              <p className="text-gray-700 text-xs sm:text-sm font-medium">
+                {new Date(tx.created_at).toLocaleString()}
+              </p>
+              <p className="mt-0.5 font-semibold text-gray-800">{tx.type}</p>
+              <p
+                className="text-gray-600 text-xs mt-0.5 flex items-center gap-1 cursor-pointer"
+                onClick={() => copyToClipboard(tx.reference)}
+              >
+                Ref: {tx.reference} <Copy size={14} />
+              </p>
+            </div>
 
-          <div className="flex justify-between mt-4">
-            <button
-              onClick={handlePrev}
-              disabled={currentPage === 1}
-              className="px-4 py-2 bg-orange-400 rounded-lg hover:bg-orange-500 disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <span className="text-sm text-gray-600">
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              onClick={handleNext}
-              disabled={currentPage === totalPages}
-              className="px-4 py-2 bg-orange-400 rounded-lg hover:bg-orange-500 disabled:opacity-50"
-            >
-              Next
-            </button>
+            <div className="w-full sm:w-1/5 mt-2 sm:mt-0 text-right">
+              <span
+                className={`font-bold text-sm sm:text-base ${
+                  tx.isCredit ? "text-green-600" : "text-red-600"
+                }`}
+              >
+                {tx.isCredit ? "+" : "-"}₦{tx.amount.toLocaleString()}
+              </span>
+            </div>
+
+            <div className="w-full sm:w-1/5 mt-2 sm:mt-0 text-right">
+              <span
+                className={`px-2 py-0.5 text-xs rounded-full font-medium ${getStatusColor(
+                  tx.status
+                )}`}
+              >
+                {tx.status.toUpperCase()}
+              </span>
+            </div>
           </div>
-        </>
-      )}
+        ))}
+      </div>
+
+      {/* Pagination */}
+      <div className="flex justify-center mt-4 space-x-2">
+        <button
+          className="px-3 py-1 rounded bg-orange-500 text-white text-sm disabled:bg-gray-300"
+          onClick={handlePrev}
+          disabled={currentPage === 1}
+        >
+          Previous
+        </button>
+        <span className="px-3 py-1 rounded border border-gray-300 text-sm">
+          Page {currentPage} of {totalPages}
+        </span>
+        <button
+          className="px-3 py-1 rounded bg-orange-500 text-white text-sm disabled:bg-gray-300"
+          onClick={handleNext}
+          disabled={currentPage === totalPages}
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 }
