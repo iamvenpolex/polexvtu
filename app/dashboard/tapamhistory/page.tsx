@@ -32,7 +32,7 @@ export default function TapamHistoryPage() {
       try {
         const token = localStorage.getItem("token");
         const response: AxiosResponse<TapamHistory[]> = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/transactions`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/transactions/tapam`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
