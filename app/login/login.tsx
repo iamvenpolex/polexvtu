@@ -90,7 +90,7 @@ export default function LoginPage() {
     }
 
     if (!success && retryCount >= 5) {
-      setMessage("⚙️ Server still waking up, please try again shortly.");
+      setMessage("⚙️ Please try again shortly.");
     }
 
     setLoading(false);

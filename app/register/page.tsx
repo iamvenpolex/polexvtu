@@ -19,6 +19,7 @@ export const metadata: Metadata = {
     "cheap electricity bills Nigeria",
     "discounted TV subscription",
     "TapAm VTU platform",
+    "Tapam.com.ng",
   ],
   alternates: {
     canonical: "https://tapam.mipitech.com.ng/register",

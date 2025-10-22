@@ -20,6 +20,8 @@ export const metadata: Metadata = {
     "cheap electricity bills Nigeria",
     "discounted TV subscription",
     "TapAm VTU platform",
+    "Tapam.com.ng",
+    "tapamng",
   ],
   openGraph: {
     title: "Login | TapAm",

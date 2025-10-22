@@ -6,7 +6,6 @@ import NotificationPopup from "./components/NotificationPopup";
 import axios, { AxiosError } from "axios";
 import {
   Wifi,
-  Phone,
   Eye,
   EyeOff,
   Gift,
@@ -15,7 +14,6 @@ import {
   Lightbulb,
   GraduationCap,
   Tv,
-  Gamepad2,
 } from "lucide-react";
 import Link from "next/link";
 

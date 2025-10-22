@@ -71,7 +71,7 @@ export default function ElectricityPage() {
       const err = error as AxiosError<{ message?: string }>;
       console.error(err.response?.data || err.message);
       setMessage({
-        text: err.response?.data?.message || "Server error",
+        text: err.response?.data?.message || "Please try again",
         type: "error",
       });
     } finally {
@@ -129,7 +129,7 @@ export default function ElectricityPage() {
       const err = error as AxiosError<{ message?: string }>;
       console.error(err.response?.data || err.message);
 
-      let friendlyMessage = err.response?.data?.message || "Server error";
+      let friendlyMessage = err.response?.data?.message || "Please try again";
       if (friendlyMessage.toLowerCase().includes("insufficient balance")) {
         friendlyMessage =
           "Your wallet balance is too low. Please top up and try again.";
