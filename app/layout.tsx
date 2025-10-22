@@ -12,8 +12,78 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "TapAm",
-  description: "Data, TV Subscription, Electricity Bills & More",
+  title: {
+    default: "TapAm – Fast Data, TV & Electricity Payments | Mipitech",
+    template: "%s",
+  },
+  description:
+    "TapAm lets you easily buy data, manage TV subscriptions, and pay electricity bills — fast and secure with instant delivery.",
+  keywords: [
+    "TapAm",
+    "Mipitech",
+    "Data Subscription",
+    "Electricity Bill Payment",
+    "TV Subscription",
+    "VTU Platform",
+    "Utility Payments Nigeria",
+    "cheap data Nigeria",
+    "cheap data top up",
+    "buy data cheap",
+    "affordable airtime top-up",
+    "cheap electricity bills Nigeria",
+    "discounted TV subscription",
+    "TapAm VTU platform",
+  ],
+  authors: [{ name: "Mipitech" }],
+  creator: "Mipitech",
+  publisher: "Mipitech",
+  metadataBase: new URL("https://tapam.mipitech.com.ng"),
+
+  openGraph: {
+    title: "TapAm – Fast Data, TV & Electricity Payments | Mipitech",
+    description:
+      "Buy data, pay electricity bills, and manage cable TV subscriptions instantly with TapAm by Mipitech.",
+    url: "https://tapam.mipitech.com.ng",
+    siteName: "TapAm",
+    images: [
+      {
+        url: "/tapam-logo1.jpg",
+        width: 1200,
+        height: 630,
+        alt: "TapAm – Fast Data & Bill Payments",
+      },
+    ],
+    locale: "en_NG",
+    type: "website",
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "TapAm – Fast Data, TV & Electricity Payments | Mipitech",
+    description:
+      "Instant payments for data, TV, and electricity bills — TapAm by Mipitech.",
+    images: ["/tapam-logo1.jpg"],
+  },
+
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/tapam-logo1.jpg",
+  },
+
+  alternates: {
+    canonical: "https://tapam.mipitech.com.ng",
+  },
+
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default function RootLayout({
@@ -25,7 +95,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${poppins.className} antialiased`}>
         <AuthProvider>
-          <PageLoader>{children}</PageLoader> {/* global  */}
+          <PageLoader>{children}</PageLoader>
         </AuthProvider>
       </body>
     </html>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -21,6 +22,18 @@ export default function AdminLayout({
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
+  // --- Prevent indexing by search engines ---
+  useEffect(() => {
+    const meta = document.createElement("meta");
+    meta.name = "robots";
+    meta.content = "noindex, nofollow";
+    document.head.appendChild(meta);
+
+    return () => {
+      document.head.removeChild(meta);
+    };
+  }, []);
+
   const links = [
     { name: "Dashboard", href: "/admin", icon: <Home size={20} /> },
     { name: "Users", href: "/admin/users", icon: <Users size={20} /> },
@@ -39,7 +52,6 @@ export default function AdminLayout({
       href: "/admin/data-prices",
       icon: <Phone size={20} />,
     },
-
     {
       name: "CABLE PRICES",
       href: "/admin/cabletv-prices",
