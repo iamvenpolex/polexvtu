@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Wifi } from "lucide-react";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
@@ -28,51 +28,97 @@ type BuyDataResponse = {
   reference?: string;
 };
 
-// ---------- Message Component ----------
-type MessageBoxProps = {
+// ---------- Modal Component ----------
+type ModalProps = {
+  title?: string;
   message: string;
-  type?: "success" | "error" | "info";
-  onClose?: () => void;
+  type?: "success" | "error" | "info" | "confirm";
+  onClose: () => void;
+  onConfirm?: () => void;
 };
 
-function MessageBox({ message, type = "info", onClose }: MessageBoxProps) {
+function Modal({
+  title,
+  message,
+  type = "info",
+  onClose,
+  onConfirm,
+}: ModalProps) {
   const bgColor =
-    type === "success" ? "#e6f9ec" : type === "error" ? "#ffe9e6" : "#e6f0ff";
+    type === "success"
+      ? "#e6f9ec"
+      : type === "error"
+      ? "#ffe9e6"
+      : type === "confirm"
+      ? "#fffdf0"
+      : "#e6f0ff";
 
   const textColor =
-    type === "success" ? "#027a36" : type === "error" ? "#b00000" : "#1a3c91";
+    type === "success"
+      ? "#027a36"
+      : type === "error"
+      ? "#b00000"
+      : type === "confirm"
+      ? "#664d03"
+      : "#1a3c91";
 
   return (
-    <div
-      style={{
-        background: bgColor,
-        color: textColor,
-        padding: "12px 16px",
-        borderRadius: 8,
-        marginBottom: 12,
-        position: "relative",
-        border: `1px solid ${textColor}`,
-      }}
-    >
-      {message}
-      {onClose && (
-        <button
-          onClick={onClose}
+    <div style={modalStyles.overlay}>
+      <div
+        style={{
+          ...modalStyles.container,
+          background: bgColor,
+          borderColor: textColor,
+          opacity: 1,
+          transform: "scale(1)",
+          transition: "all 0.3s ease",
+        }}
+      >
+        <h2 style={{ ...modalStyles.title, color: textColor }}>
+          {title ||
+            (type === "success"
+              ? "Success"
+              : type === "error"
+              ? "Error"
+              : type === "confirm"
+              ? "Confirm Action"
+              : "Notice")}
+        </h2>
+        <p
           style={{
-            position: "absolute",
-            right: 8,
-            top: 8,
-            border: "none",
-            background: "transparent",
+            ...modalStyles.message,
             color: textColor,
-            fontWeight: 700,
-            cursor: "pointer",
-            fontSize: 14,
+            whiteSpace: "pre-line",
           }}
         >
-          ×
-        </button>
-      )}
+          {message}
+        </p>
+        <div style={modalStyles.actions}>
+          {type === "confirm" ? (
+            <>
+              <button
+                onClick={onClose}
+                style={{ ...modalStyles.button, background: "#ccc" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={onConfirm}
+                style={{ ...modalStyles.button, background: "#ff8a00" }}
+              >
+                Confirm
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={onClose}
+              style={{ ...modalStyles.button, background: "#ff8a00" }}
+            >
+              Close
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -127,9 +173,10 @@ export default function DataPurchasePage() {
   const [error, setError] = useState<string | null>(null);
   const [phone, setPhone] = useState("");
   const [buyingId, setBuyingId] = useState<string | null>(null);
-  const [message, setMessage] = useState<{
-    text: string;
-    type?: "success" | "error" | "info";
+  const [modal, setModal] = useState<{
+    message: string;
+    type?: "success" | "error" | "info" | "confirm";
+    onConfirm?: () => void;
   } | null>(null);
 
   useEffect(() => {
@@ -168,25 +215,28 @@ export default function DataPurchasePage() {
   // ---------- Buy Data ----------
   async function handleBuy(plan: Plan) {
     if (!phone || phone.length !== 11) {
-      setMessage({
-        text: "Enter a valid 11-digit phone number",
+      setModal({
+        message: "Enter a valid 11-digit phone number",
         type: "error",
       });
       return;
     }
 
+    const displayPrice = plan.custom_price ?? plan.price;
+
+    setModal({
+      type: "confirm",
+      message: `Buy ${plan.name} for ₦${displayPrice}\nto phone number ${phone}?`,
+      onConfirm: () => proceedBuy(plan),
+    });
+  }
+
+  async function proceedBuy(plan: Plan) {
+    setModal(null);
     const client_reference = `ref_${Date.now()}_${Math.floor(
       Math.random() * 1000
     )}`;
     const displayPrice = plan.custom_price ?? plan.price;
-
-    if (
-      !confirm(
-        `         PLEASE CONFIRM DETAILS BEFORE PROCEEDING
-        Buy ${plan.name} for ₦${displayPrice}? to phone number ${phone}?`
-      )
-    )
-      return;
 
     try {
       setBuyingId(plan.plan_id);
@@ -194,7 +244,7 @@ export default function DataPurchasePage() {
       const token = localStorage.getItem("token");
       const user_id = localStorage.getItem("user_id");
       if (!user_id) {
-        setMessage({ text: "User not logged in", type: "error" });
+        setModal({ message: "User not logged in", type: "error" });
         return;
       }
 
@@ -217,19 +267,22 @@ export default function DataPurchasePage() {
       console.log("Backend response:", res.data);
 
       if (res.data.success) {
-        setMessage({
-          text: `Purchase successful!\nAmount: ₦${displayPrice}\nReference: ${res.data.reference}`,
+        setModal({
+          message: `Purchase successful!\nAmount: ₦${displayPrice}\nReference: ${res.data.reference}`,
           type: "success",
         });
       } else {
-        setMessage({
-          text: res.data.message || "Purchase failed",
+        setModal({
+          message: res.data.message || "Purchase failed",
           type: "error",
         });
       }
     } catch (err: unknown) {
       console.error("Buy error:", err);
-      setMessage({ text: "Purchase failed. Please try again.", type: "error" });
+      setModal({
+        message: "Purchase failed. Please try again.",
+        type: "error",
+      });
     } finally {
       setBuyingId(null);
     }
@@ -237,19 +290,24 @@ export default function DataPurchasePage() {
 
   return (
     <div style={styles.page}>
-      <div style={styles.back}>
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-2 text-sm bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition"
-        >
-          <ArrowLeft size={16} />
-          <span>Back to Dashboard</span>
-        </Link>
-      </div>
-      <h1 style={styles.title}>Buy Data</h1>
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm mb-4">
+        <div className="flex items-center gap-3 px-4 py-4">
+          <Link
+            href="/dashboard"
+            className="flex items-center justify-center w-9 h-9 bg-orange-100 text-orange-600 rounded-full hover:bg-orange-200 transition"
+          >
+            <ArrowLeft size={18} />
+          </Link>
+          <h1 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+            <Wifi size={18} className="text-orange-600" />
+            Data Purchase
+          </h1>
+        </div>
+      </header>
 
       {/* Network buttons */}
-      <div style={styles.networkBar}>
+      <div style={{ ...styles.networkBar, marginBottom: 16 }}>
         {Object.entries(NETWORKS).map(([key, meta]) => (
           <button
             key={key}
@@ -269,7 +327,7 @@ export default function DataPurchasePage() {
       </div>
 
       {/* Product types */}
-      <div style={styles.productTypes}>
+      <div style={{ ...styles.productTypes, marginBottom: 16 }}>
         {NETWORKS[selectedNetwork].productTypes.map((pt) => (
           <button
             key={pt.key}
@@ -287,7 +345,7 @@ export default function DataPurchasePage() {
       </div>
 
       {/* Phone input */}
-      <div style={styles.controlsRow}>
+      <div style={{ ...styles.controlsRow, marginBottom: 24 }}>
         <input
           placeholder="Enter phone number"
           value={phone}
@@ -302,15 +360,6 @@ export default function DataPurchasePage() {
           {loadingPlans ? "Loading..." : "Refresh Plans"}
         </button>
       </div>
-
-      {/* Message box */}
-      {message && (
-        <MessageBox
-          message={message.text}
-          type={message.type}
-          onClose={() => setMessage(null)}
-        />
-      )}
 
       {/* Error */}
       {error && <div style={styles.errorBox}>{error}</div>}
@@ -349,6 +398,16 @@ export default function DataPurchasePage() {
           ))
         )}
       </div>
+
+      {/* Global Modal */}
+      {modal && (
+        <Modal
+          message={modal.message}
+          type={modal.type}
+          onClose={() => setModal(null)}
+          onConfirm={modal.onConfirm}
+        />
+      )}
     </div>
   );
 }
@@ -359,14 +418,12 @@ const DARK_TEXT = "#222";
 
 const styles: Record<string, React.CSSProperties> = {
   page: {
-    padding: 16,
+    padding: 5,
     fontFamily: "Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial",
   },
-  title: { fontSize: 22, fontWeight: 700, color: ORANGE, marginBottom: 12 },
   networkBar: {
     display: "flex",
     gap: 8,
-    marginBottom: 12,
     flexWrap: "wrap",
     overflowX: "auto",
   },
@@ -390,7 +447,6 @@ const styles: Record<string, React.CSSProperties> = {
   productTypes: {
     display: "flex",
     gap: 6,
-    marginBottom: 12,
     flexWrap: "wrap",
     overflowX: "auto",
   },
@@ -411,7 +467,7 @@ const styles: Record<string, React.CSSProperties> = {
     border: `1px solid ${ORANGE}`,
     color: ORANGE,
   },
-  controlsRow: { display: "flex", gap: 8, marginBottom: 18, flexWrap: "wrap" },
+  controlsRow: { display: "flex", gap: 8, flexWrap: "wrap" },
   phoneInput: {
     padding: "10px 12px",
     borderRadius: 8,
@@ -473,3 +529,56 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 14,
   },
 };
+
+// ---------- Modal Styles ----------
+const modalStyles: Record<string, React.CSSProperties> = {
+  overlay: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(0,0,0,0.45)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1000,
+  },
+  container: {
+    width: "90%",
+    maxWidth: 400,
+    padding: 20,
+    borderRadius: 12,
+    border: "2px solid",
+    textAlign: "center",
+    boxShadow: "0 8px 20px rgba(0,0,0,0.25)",
+    transition: "all 0.3s ease",
+    transform: "scale(0.95)",
+    opacity: 0,
+    animation: "fadeScaleIn 0.3s forwards",
+  },
+  title: { fontWeight: 700, fontSize: 18, marginBottom: 10 },
+  message: { fontSize: 14, marginBottom: 20 },
+  actions: {
+    display: "flex",
+    justifyContent: "center",
+    gap: 10,
+  },
+  button: {
+    color: "#fff",
+    border: "none",
+    borderRadius: 8,
+    padding: "8px 14px",
+    fontWeight: 600,
+    cursor: "pointer",
+  },
+};
+
+// ---------- Add keyframes for modal animation ----------
+const styleSheet = document.styleSheets[0];
+styleSheet.insertRule(
+  `
+@keyframes fadeScaleIn {
+  0% { opacity: 0; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
+}
+`,
+  styleSheet.cssRules.length
+);

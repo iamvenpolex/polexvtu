@@ -3,7 +3,7 @@
 import { useState } from "react";
 import axios, { AxiosError } from "axios";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Lightbulb } from "lucide-react";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
@@ -39,10 +39,12 @@ export default function ElectricityPage() {
   } | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [customerName, setCustomerName] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const handleVerify = async () => {
     if (!company || !meterno || !amount) {
       setMessage({ text: "All fields are required", type: "error" });
+      setModalOpen(true);
       return;
     }
 
@@ -67,6 +69,7 @@ export default function ElectricityPage() {
           type: "error",
         });
       }
+      setModalOpen(true);
     } catch (error) {
       const err = error as AxiosError<{ message?: string }>;
       console.error(err.response?.data || err.message);
@@ -74,6 +77,7 @@ export default function ElectricityPage() {
         text: err.response?.data?.message || "Please try again",
         type: "error",
       });
+      setModalOpen(true);
     } finally {
       setLoading(false);
     }
@@ -82,11 +86,13 @@ export default function ElectricityPage() {
   const handlePay = async () => {
     if (!company || !meterno || !amount) {
       setMessage({ text: "All fields are required", type: "error" });
+      setModalOpen(true);
       return;
     }
 
     if (Number(amount) < 1000) {
       setMessage({ text: "Minimum amount is ₦1000", type: "error" });
+      setModalOpen(true);
       return;
     }
 
@@ -117,68 +123,62 @@ export default function ElectricityPage() {
       } else {
         let friendlyMessage = res.data.message;
         if (res.data.message?.toLowerCase().includes("insufficient balance")) {
-          friendlyMessage = "Failed please Try Again Later.";
+          friendlyMessage =
+            "Your wallet balance is too low. Please top up and try again.";
         }
-
         setMessage({
           text: friendlyMessage || "Payment failed",
           type: "error",
         });
       }
+      setModalOpen(true);
     } catch (error) {
       const err = error as AxiosError<{ message?: string }>;
       console.error(err.response?.data || err.message);
-
       let friendlyMessage = err.response?.data?.message || "Please try again";
       if (friendlyMessage.toLowerCase().includes("insufficient balance")) {
         friendlyMessage =
           "Your wallet balance is too low. Please top up and try again.";
       }
-
       setMessage({ text: friendlyMessage, type: "error" });
+      setModalOpen(true);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDownloadToken = () => {
+    if (!token) return;
+    const blob = new Blob([token], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `meter_token_${meterno}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
     <div
       style={{ padding: 16, fontFamily: "Inter, sans-serif", color: "#1a1a1a" }}
     >
-      <Link
-        href="/dashboard"
-        className="inline-flex items-center gap-2 text-sm bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition"
-      >
-        <ArrowLeft size={16} />
-        <span>Back to Dashboard</span>
-      </Link>
-
-      <h1
-        style={{
-          fontSize: 26,
-          fontWeight: 700,
-          color: "#ff6b00",
-          marginBottom: 16,
-        }}
-      >
-        Pay Electricity Bill
-      </h1>
-
-      {message && (
-        <div
-          style={{
-            margin: "12px 0",
-            padding: 12,
-            borderRadius: 8,
-            background: message.type === "error" ? "#ffe9e6" : "#e6f9ec",
-            color: message.type === "error" ? "#b00000" : "#027a36",
-            fontWeight: 600,
-          }}
-        >
-          {message.text}
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm mb-4">
+        <div className="flex items-center gap-3 px-4 py-4">
+          <Link
+            href="/dashboard"
+            className="flex items-center justify-center w-9 h-9 bg-orange-100 text-orange-600 rounded-full hover:bg-orange-200 transition"
+          >
+            <ArrowLeft size={18} />
+          </Link>
+          <h1 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+            <Lightbulb size={18} className="text-orange-600" />
+            Pay Electricity Bills
+          </h1>
         </div>
-      )}
+      </header>
 
+      {/* Form */}
       <div style={{ marginBottom: 12 }}>
         <label style={{ color: "#ff8a00", fontWeight: 600 }}>Company</label>
         <select
@@ -237,7 +237,7 @@ export default function ElectricityPage() {
             marginTop: 4,
             border: "1px solid #000",
             fontWeight: 500,
-            color: "#000", // text black
+            color: "#000",
           }}
         />
       </div>
@@ -256,7 +256,7 @@ export default function ElectricityPage() {
             marginTop: 4,
             border: "1px solid #000",
             fontWeight: 500,
-            color: "#000", // text black
+            color: "#000",
           }}
         />
       </div>
@@ -301,6 +301,7 @@ export default function ElectricityPage() {
         </button>
       </div>
 
+      {/* Token Section */}
       {token && (
         <div
           style={{
@@ -318,6 +319,75 @@ export default function ElectricityPage() {
             Meter Token:
           </span>{" "}
           {token}
+          <button
+            onClick={handleDownloadToken}
+            style={{
+              marginLeft: 12,
+              padding: "6px 12px",
+              borderRadius: 6,
+              background: "#ff8a00",
+              color: "#fff",
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            Download
+          </button>
+        </div>
+      )}
+
+      {/* Modal */}
+      {modalOpen && message && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(0,0,0,0.4)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+          onClick={() => setModalOpen(false)}
+        >
+          <div
+            style={{
+              background: "#fff",
+              padding: 20,
+              borderRadius: 12,
+              minWidth: 300,
+              maxWidth: 400,
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              textAlign: "center",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p
+              style={{
+                fontWeight: 600,
+                color: message.type === "error" ? "#b00000" : "#027a36",
+                marginBottom: 16,
+              }}
+            >
+              {message.text}
+            </p>
+            <button
+              onClick={() => setModalOpen(false)}
+              style={{
+                padding: "8px 16px",
+                borderRadius: 6,
+                background: "#ff8a00",
+                color: "#fff",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Close
+            </button>
+          </div>
         </div>
       )}
     </div>

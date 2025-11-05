@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -33,9 +33,10 @@ export default function AdminDataPrices() {
   const [productType, setProductType] = useState("mtn_sme");
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(false);
-  const [savingPlanId, setSavingPlanId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  // Fetch plans from backend
+  // Fetch plans
   useEffect(() => {
     async function fetchPlans() {
       setLoading(true);
@@ -43,7 +44,6 @@ export default function AdminDataPrices() {
         const res = await axios.get<{ plans: Plan[] }>(
           `${BASE_URL}/api/vtu/plans/${productType}`
         );
-
         setPlans(res.data.plans || []);
       } catch (err) {
         console.error("fetchPlans error:", err);
@@ -67,29 +67,39 @@ export default function AdminDataPrices() {
     );
   };
 
-  // Save custom price to backend
-  const saveCustomPrice = async (plan: Plan) => {
-    if (plan.custom_price == null) {
-      alert("Custom price cannot be empty!");
+  // Filtered plans by search term
+  const filteredPlans = useMemo(() => {
+    return plans.filter((p) =>
+      p.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [plans, searchTerm]);
+
+  // Save all custom prices in bulk
+  const saveAllPrices = async () => {
+    const updatedPlans = plans.filter((p) => p.custom_price != null);
+    if (updatedPlans.length === 0) {
+      alert("No custom prices to save.");
       return;
     }
 
-    setSavingPlanId(plan.plan_id);
-
+    setSaving(true);
     try {
-      await axios.post(`${BASE_URL}/api/vtu/plans/custom-price`, {
+      await axios.post(`${BASE_URL}/api/vtu/plans/custom-price/bulk`, {
         product_type: productType,
-        plan_id: plan.plan_id,
-        plan_name: plan.name,
-        custom_price: plan.custom_price,
-        status: "active",
+        plans: updatedPlans.map((p) => ({
+          plan_id: p.plan_id,
+          plan_name: p.name,
+          custom_price: p.custom_price,
+          status: "active",
+        })),
       });
-      alert("Custom price saved!");
+
+      alert("All custom prices saved successfully!");
     } catch (err) {
-      console.error("saveCustomPrice error:", err);
-      alert("Failed to save custom price");
+      console.error("saveAllPrices error:", err);
+      alert("Failed to save custom prices.");
     } finally {
-      setSavingPlanId(null);
+      setSaving(false);
     }
   };
 
@@ -99,67 +109,100 @@ export default function AdminDataPrices() {
         Admin Data Price Management
       </h1>
 
-      <div className="mb-4">
-        <label className="mr-2 font-semibold">Select Product Type:</label>
-        <select
-          value={productType}
-          onChange={(e) => setProductType(e.target.value)}
-          className="border px-2 py-1 rounded"
+      <div className="flex flex-wrap gap-4 items-center mb-4">
+        <div>
+          <label className="mr-2 font-semibold">Product Type:</label>
+          <select
+            value={productType}
+            onChange={(e) => setProductType(e.target.value)}
+            className="border px-2 py-1 rounded"
+          >
+            {PRODUCT_TYPES.map((pt) => (
+              <option key={pt} value={pt}>
+                {pt.toUpperCase()}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <input
+            type="text"
+            placeholder="Search plans..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="border px-3 py-1 rounded w-56"
+          />
+        </div>
+
+        <button
+          onClick={saveAllPrices}
+          disabled={saving}
+          className="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 disabled:opacity-50"
         >
-          {PRODUCT_TYPES.map((pt) => (
-            <option key={pt} value={pt}>
-              {pt.toUpperCase()}
-            </option>
-          ))}
-        </select>
+          {saving ? "Saving All..." : "💾 Save All Changes"}
+        </button>
       </div>
 
       {loading ? (
         <p>Loading plans...</p>
       ) : (
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-orange-100">
-              <th className="border px-3 py-1">Plan Name</th>
-              <th className="border px-3 py-1">EA Price</th>
-              <th className="border px-3 py-1">Custom Price</th>
-              <th className="border px-3 py-1">Displayed Price</th>
-              <th className="border px-3 py-1">Validity</th>
-              <th className="border px-3 py-1">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {plans.map((plan) => (
-              <tr key={plan.plan_id} className="hover:bg-orange-50">
-                <td className="border px-3 py-1">{plan.name}</td>
-                <td className="border px-3 py-1">₦{plan.price}</td>
-                <td className="border px-3 py-1">
-                  <input
-                    type="number"
-                    value={plan.custom_price ?? ""}
-                    onChange={(e) =>
-                      handlePriceChange(plan.plan_id, e.target.value)
-                    }
-                    className="border px-2 py-1 w-24"
-                  />
-                </td>
-                <td className="border px-3 py-1">
-                  ₦{plan.custom_price ?? plan.price}
-                </td>
-                <td className="border px-3 py-1">{plan.validity}</td>
-                <td className="border px-3 py-1">
-                  <button
-                    onClick={() => saveCustomPrice(plan)}
-                    disabled={savingPlanId === plan.plan_id}
-                    className="bg-orange-500 text-white px-3 py-1 rounded hover:bg-orange-600 disabled:opacity-50"
-                  >
-                    {savingPlanId === plan.plan_id ? "Saving..." : "Save"}
-                  </button>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-orange-100 text-sm md:text-base">
+                <th className="border px-3 py-2">Plan Name</th>
+                <th className="border px-3 py-2">EA Price</th>
+                <th className="border px-3 py-2">Custom Price</th>
+                <th className="border px-3 py-2">Difference</th>
+                <th className="border px-3 py-2">Displayed Price</th>
+                <th className="border px-3 py-2">Validity</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredPlans.map((plan) => {
+                const difference =
+                  plan.custom_price != null
+                    ? plan.custom_price - plan.price
+                    : 0;
+                const diffColor =
+                  difference > 0
+                    ? "text-green-600"
+                    : difference < 0
+                    ? "text-red-600"
+                    : "text-gray-500";
+
+                return (
+                  <tr key={plan.plan_id} className="hover:bg-orange-50">
+                    <td className="border px-3 py-2">{plan.name}</td>
+                    <td className="border px-3 py-2">₦{plan.price}</td>
+                    <td className="border px-3 py-2">
+                      <input
+                        type="number"
+                        value={plan.custom_price ?? ""}
+                        onChange={(e) =>
+                          handlePriceChange(plan.plan_id, e.target.value)
+                        }
+                        className="border px-2 py-1 w-24"
+                      />
+                    </td>
+                    <td className={`border px-3 py-2 ${diffColor}`}>
+                      {difference === 0
+                        ? "—"
+                        : difference > 0
+                        ? `+₦${difference}`
+                        : `₦${difference}`}
+                    </td>
+                    <td className="border px-3 py-2">
+                      ₦{plan.custom_price ?? plan.price}
+                    </td>
+                    <td className="border px-3 py-2">{plan.validity}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

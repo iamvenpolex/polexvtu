@@ -9,11 +9,12 @@ import {
   Eye,
   EyeOff,
   Gift,
-  ArrowDownToLine,
-  ArrowUpToLine,
+  Wallet,
+  Send,
   Lightbulb,
   GraduationCap,
   Tv,
+  History,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -168,7 +169,7 @@ export default function DashboardPage() {
               href="/dashboard/wallet/fund"
               className="flex flex-col items-center justify-center gap-1 sm:gap-2 bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow text-xs sm:text-sm"
             >
-              <ArrowDownToLine size={18} />
+              <Wallet size={18} />
               Fund Wallet
             </Link>
           </div>
@@ -185,7 +186,7 @@ export default function DashboardPage() {
               href="/dashboard/wallet/withdraw/wallet-tapam"
               className="flex flex-col items-center justify-center gap-1 sm:gap-2 bg-gray-700 hover:bg-gray-800 text-white font-medium py-2 sm:py-4 rounded-lg shadow text-xs sm:text-sm"
             >
-              <ArrowUpToLine size={18} />
+              <Send size={18} />
               Transfer
             </Link>
 
@@ -203,7 +204,7 @@ export default function DashboardPage() {
               href="/dashboard/tapamhistory"
               className="flex items-center justify-center gap-1 sm:gap-2 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow text-xs sm:text-sm col-span-2 sm:col-span-1 sm:justify-center"
             >
-              <ArrowDownToLine size={18} />
+              <History size={18} />
               View History
             </Link>
           </div>

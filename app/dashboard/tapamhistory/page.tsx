@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import axios, { AxiosResponse } from "axios";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Copy, History } from "lucide-react";
 
 interface TapamHistory {
   id: number;
@@ -77,6 +77,13 @@ export default function TapamHistoryPage() {
       </div>
     );
 
+  const copyToClipboard = (text: string) => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      alert(`Copied: ${text}`);
+    }
+  };
+
   // Pagination calculations
   const indexOfLast = currentPage * transactionsPerPage;
   const indexOfFirst = indexOfLast - transactionsPerPage;
@@ -84,21 +91,24 @@ export default function TapamHistoryPage() {
   const totalPages = Math.ceil(history.length / transactionsPerPage);
 
   return (
-    <div className="p-4 sm:p-6 max-w-2xl mx-auto">
-      <div className="mb-8">
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-2 text-sm bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition"
-        >
-          <ArrowLeft size={16} />
-          <span>Back to Dashboard</span>
-        </Link>
-      </div>
-      <h1 className="text-2xl sm:text-3xl font-bold mb-4 text-orange-600 text-center">
-        TapAm & Reward History
-      </h1>
+    <div className=" sm:p-6 max-w-2xl mx-auto">
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm">
+        <div className="flex items-center gap-3 px-4 py-3">
+          <Link
+            href="/dashboard"
+            className="flex items-center justify-center w-9 h-9 bg-orange-100 text-orange-600 rounded-full hover:bg-orange-200 transition"
+          >
+            <ArrowLeft size={18} />
+          </Link>
+          <h1 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+            <History size={18} className="text-orange-600" />
+            Tapam History
+          </h1>
+        </div>
+      </header>
 
-      <div className="space-y-3">
+      <div className="space-y-3 mb-4 py-6">
         {currentTransactions.map((item) => (
           <div
             key={item.id}
@@ -143,8 +153,12 @@ export default function TapamHistoryPage() {
                   {item.status.toUpperCase()}
                 </span>
               </div>
-              <div className="w-full sm:w-1/5 mt-2 sm:mt-0 text-right text-gray-500 text-xs sm:text-sm">
-                {item.reference}
+              <div
+                className="w-full sm:w-1/5 mt-2 sm:mt-0 flex items-center justify-end gap-1 text-gray-600 text-xs sm:text-sm cursor-pointer hover:text-orange-600 transition"
+                onClick={() => copyToClipboard(item.reference)}
+              >
+                <span className="truncate">{item.reference}</span>
+                <Copy size={14} className="flex-shrink-0" />
               </div>
             </div>
           </div>

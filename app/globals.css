@@ -34,3 +34,8 @@ h3 {
 body {
   font-family: var(--font-poppins), sans-serif;
 }
+
+/* styles/globals.css */
+* {
+  color-scheme: light;
+}

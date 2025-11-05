@@ -13,7 +13,7 @@ interface User {
   reward: number;
 }
 
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 10;
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -21,6 +21,7 @@ export default function AdminUsersPage() {
     Record<number, { balance: number; reward: number; role: string }>
   >({});
   const [page, setPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const API_BASE =
     process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
@@ -83,8 +84,17 @@ export default function AdminUsersPage() {
     }
   };
 
-  const totalPages = Math.ceil(users.length / ITEMS_PER_PAGE);
-  const displayedUsers = users.slice(
+  // 🔍 Filter users by search term (email or name)
+  const filteredUsers = users.filter(
+    (u) =>
+      u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      `${u.first_name} ${u.last_name}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+  const displayedUsers = filteredUsers.slice(
     (page - 1) * ITEMS_PER_PAGE,
     page * ITEMS_PER_PAGE
   );
@@ -92,6 +102,21 @@ export default function AdminUsersPage() {
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Users</h1>
+
+      {/* 🔍 Search Bar */}
+      <div className="mb-4 flex justify-between items-center">
+        <input
+          type="text"
+          placeholder="Search by email or name..."
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setPage(1); // reset to first page on search
+          }}
+          className="w-full md:w-1/3 p-2 border border-gray-400 rounded"
+        />
+      </div>
+
       <table className="w-full border border-gray-300">
         <thead className="bg-gray-800 text-white">
           <tr>
@@ -169,6 +194,14 @@ export default function AdminUsersPage() {
               </td>
             </tr>
           ))}
+
+          {displayedUsers.length === 0 && (
+            <tr>
+              <td colSpan={7} className="text-center p-4 text-gray-500">
+                No users found.
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
 
