@@ -39,7 +39,7 @@ interface ApiError {
 // ------------------------
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
-  "https://polexvtu-backend-production.up.railway.app";
+  "https://polexvtu-backend.onrender.com";
 
 export default function DashboardPage() {
   // ------------------------
@@ -101,11 +101,21 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-100 p-3 sm:p-6">
       <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
         {/* ---------------- Wallet Dashboard ---------------- */}
-        <div className="bg-white rounded-xl shadow-md p-3 sm:p-6">
+        <div className="bg-white rounded-xl shadow-md p-3 sm:p-6 relative">
           <div className="flex items-center justify-between">
             <h1 className="text-base sm:text-xl font-semibold text-orange-600">
               Hi, {firstName} 👋
             </h1>
+
+            {/* ---------------- Transaction History CTA at top-right ---------------- */}
+            {user && !loading && (
+              <Link
+                href="/dashboard/transactionhistory"
+                className="inline-flex items-center px-3 py-1 text-xs sm:text-sm bg-orange-600 text-white rounded-full hover:bg-orange-700 transition"
+              >
+                History
+              </Link>
+            )}
           </div>
 
           {/* 🔔 Welcome Popup */}

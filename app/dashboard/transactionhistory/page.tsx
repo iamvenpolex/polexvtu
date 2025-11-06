@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Copy } from "lucide-react";
+import axios from "axios";
 
 export interface UserTransaction {
   id: number;
@@ -12,23 +14,54 @@ export interface UserTransaction {
   isCredit: boolean;
 }
 
-interface TransactionTableProps {
-  transactions?: UserTransaction[];
-  currentPage: number;
-  transactionsPerPage: number;
-  totalPages: number;
-  handleNext: () => void;
-  handlePrev: () => void;
-}
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
 
-export default function TransactionTable({
-  transactions = [],
-  currentPage,
-  transactionsPerPage,
-  totalPages,
-  handleNext,
-  handlePrev,
-}: TransactionTableProps) {
+export default function TransactionPage() {
+  const [transactions, setTransactions] = useState<UserTransaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const transactionsPerPage = 6;
+  const totalPages = Math.ceil(transactions.length / transactionsPerPage);
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) throw new Error("User not authenticated");
+
+        const res = await axios.get<UserTransaction[]>(
+          `${API_BASE_URL}/api/transactions`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        setTransactions(res.data);
+        setError("");
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err))
+          setError(
+            err.response?.data?.message || "Failed to fetch transactions"
+          );
+        else if (err instanceof Error) setError(err.message);
+        else setError("Something went wrong");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTransactions();
+  }, []);
+
+  const handleNext = () => {
+    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
+  };
+  const handlePrev = () => {
+    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
+  };
+
   const indexOfLastTx = currentPage * transactionsPerPage;
   const indexOfFirstTx = indexOfLastTx - transactionsPerPage;
   const currentTransactions = transactions.slice(indexOfFirstTx, indexOfLastTx);
@@ -53,9 +86,13 @@ export default function TransactionTable({
     }
   };
 
+  if (loading)
+    return <p className="text-center mt-6">Loading transactions...</p>;
+  if (error) return <p className="text-center text-red-500 mt-6">{error}</p>;
+
   return (
-    <div className="p-4 sm:p-6 bg-white rounded-xl shadow-md">
-      <h2 className="text-xl font-semibold mb-4 text-gray-800 text-center">
+    <div className="min-h-screen p-6 max-w-3xl mx-auto bg-white rounded-xl shadow-md">
+      <h2 className="text-2xl font-semibold mb-4 text-center">
         Transaction History
       </h2>
 

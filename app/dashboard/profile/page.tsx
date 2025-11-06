@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Eye, EyeOff, Gift } from "lucide-react";
 import Link from "next/link";
-import TransactionTable, { UserTransaction } from "./TransactionTable/page";
 
 interface User {
   first_name: string;
@@ -15,41 +14,26 @@ interface User {
   phone: number;
 }
 
-// Use environment variable
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000"; // fallback for local dev
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
 
 export default function ReadOnlyProfilePage() {
   const [user, setUser] = useState<User | null>(null);
-  const [transactions, setTransactions] = useState<UserTransaction[]>([]);
   const [showBalance, setShowBalance] = useState(true);
   const [showReward, setShowReward] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const transactionsPerPage = 6;
-  const totalPages = Math.ceil(transactions.length / transactionsPerPage);
-
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchProfile = async () => {
       try {
         const token = localStorage.getItem("token");
         if (!token) throw new Error("User not authenticated");
 
-        const profileRes = await axios.get<User>(
-          `${API_BASE_URL}/api/user/profile`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setUser(profileRes.data);
-
-        const txRes = await axios.get<UserTransaction[]>(
-          `${API_BASE_URL}/api/transactions`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setTransactions(txRes.data);
-
+        const res = await axios.get<User>(`${API_BASE_URL}/api/user/profile`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUser(res.data);
         setError("");
       } catch (err: unknown) {
         if (axios.isAxiosError(err))
@@ -61,15 +45,8 @@ export default function ReadOnlyProfilePage() {
       }
     };
 
-    fetchData();
+    fetchProfile();
   }, []);
-
-  const handleNext = () => {
-    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
-  };
-  const handlePrev = () => {
-    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
-  };
 
   return (
     <div className="min-h-screen bg-gray-100 p-1 sm:p-6">
@@ -146,18 +123,15 @@ export default function ReadOnlyProfilePage() {
                 </p>
               </div>
             </div>
-          </div>
-        )}
 
-        {user && (
-          <TransactionTable
-            transactions={transactions}
-            currentPage={currentPage}
-            transactionsPerPage={transactionsPerPage}
-            totalPages={totalPages}
-            handleNext={handleNext}
-            handlePrev={handlePrev}
-          />
+            {/* Link to Transactions Page */}
+            <Link
+              href="/dashboard/transactions"
+              className="text-blue-600 hover:underline mt-4 inline-block"
+            >
+              View Transaction History
+            </Link>
+          </div>
         )}
       </div>
     </div>
