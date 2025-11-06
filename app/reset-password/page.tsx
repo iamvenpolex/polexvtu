@@ -19,7 +19,7 @@ export default function ResetPasswordPage() {
 
   const API_BASE_URL =
     process.env.NEXT_PUBLIC_API_BASE_URL ||
-    "https://polexvtu-backend-production.up.railway.app";
+    "https://polexvtu-backend.onrender.com";
 
   // Password rules
   const passwordRules = [

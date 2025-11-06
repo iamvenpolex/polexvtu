@@ -75,7 +75,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       const res = await fetch(
-        "https://polexvtu-backend-production.up.railway.app/api/auth/register",
+        "https://polexvtu-backend.onrender.com/api/auth/register",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

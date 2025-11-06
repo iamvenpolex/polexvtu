@@ -17,7 +17,7 @@ export default function VerifyCodePage() {
 
   const API_BASE_URL =
     process.env.NEXT_PUBLIC_API_BASE_URL ||
-    "https://polexvtu-backend-production.up.railway.app";
+    "https://polexvtu-backend.onrender.com";
 
   // ✅ Automatically get email from localStorage
   useEffect(() => {
