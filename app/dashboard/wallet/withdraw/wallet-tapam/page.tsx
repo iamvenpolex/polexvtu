@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import axios, { AxiosError } from "axios";
-import WalletToTapamForm from "./WalletToTapamForm/page";
+import WalletToTapamForm from "./WalletToTapamForm";
 import Link from "next/link";
 import html2canvas from "html2canvas-pro";
 import { ArrowLeft, CheckCircle, Download, Send } from "lucide-react";
