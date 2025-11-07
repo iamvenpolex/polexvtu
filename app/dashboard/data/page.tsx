@@ -183,6 +183,24 @@ export default function DataPurchasePage() {
     if (selectedProductType) fetchPlans(selectedProductType);
   }, [selectedProductType]);
 
+  // ✅ FIX: Add animation only in browser
+  useEffect(() => {
+    try {
+      const ss = document.styleSheets[0];
+      ss.insertRule(
+        `
+        @keyframes fadeScaleIn {
+          0% { opacity: 0; transform: scale(0.95); }
+          100% { opacity: 1; transform: scale(1); }
+        }
+      `,
+        ss.cssRules.length
+      );
+    } catch (e) {
+      console.warn("Animation rule insertion failed:", e);
+    }
+  }, []);
+
   // ---------- Fetch Plans ----------
   async function fetchPlans(productType: string) {
     setLoadingPlans(true);
@@ -202,7 +220,7 @@ export default function DataPurchasePage() {
     }
   }
 
-  // ---------- Get Network Code ----------
+  // ---------- Network Code ----------
   function getNetworkCode(productKey?: string): string {
     if (!productKey) return "01";
     if (productKey.startsWith("mtn")) return "01";
@@ -264,7 +282,6 @@ export default function DataPurchasePage() {
         payload,
         { headers }
       );
-      console.log("Backend response:", res.data);
 
       if (res.data.success) {
         setModal({
@@ -570,15 +587,3 @@ const modalStyles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
   },
 };
-
-// ---------- Add keyframes for modal animation ----------
-const styleSheet = document.styleSheets[0];
-styleSheet.insertRule(
-  `
-@keyframes fadeScaleIn {
-  0% { opacity: 0; transform: scale(0.95); }
-  100% { opacity: 1; transform: scale(1); }
-}
-`,
-  styleSheet.cssRules.length
-);
