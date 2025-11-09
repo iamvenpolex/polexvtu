@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import axios, { AxiosError } from "axios";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, GraduationCap } from "lucide-react";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
@@ -105,24 +105,18 @@ export default function EducationPage() {
 
   return (
     <div style={{ padding: 16, fontFamily: "Inter, sans-serif" }}>
-      <Link
-        href="/dashboard"
-        className="inline-flex items-center gap-2 text-sm bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition"
-      >
-        <ArrowLeft size={16} />
-        <span>Back to Dashboard</span>
-      </Link>
-
-      <h1
-        style={{
-          fontSize: 26,
-          fontWeight: 700,
-          color: "#ff6b00",
-          margin: "16px 0",
-        }}
-      >
-        Buy Education Pins
-      </h1>
+      <div className="flex items-center gap-3 px-4 py-3">
+        <Link
+          href="/dashboard"
+          className="flex items-center justify-center w-9 h-9 bg-orange-100 text-orange-600 rounded-full hover:bg-orange-200 transition"
+        >
+          <ArrowLeft size={18} />
+        </Link>
+        <h1 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+          <GraduationCap size={18} className="text-orange-600" />
+          Buy Education Pins
+        </h1>
+      </div>
 
       {message && (
         <div

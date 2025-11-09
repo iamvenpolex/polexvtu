@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Copy } from "lucide-react";
 import axios from "axios";
+import Link from "next/link";
+import { ArrowLeft, History } from "lucide-react";
 
 export interface UserTransaction {
   id: number;
@@ -24,7 +26,7 @@ export default function TransactionPage() {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const transactionsPerPage = 6;
+  const transactionsPerPage = 10;
   const totalPages = Math.ceil(transactions.length / transactionsPerPage);
 
   useEffect(() => {
@@ -91,12 +93,21 @@ export default function TransactionPage() {
   if (error) return <p className="text-center text-red-500 mt-6">{error}</p>;
 
   return (
-    <div className="min-h-screen p-6 max-w-3xl mx-auto bg-white rounded-xl shadow-md">
-      <h2 className="text-2xl font-semibold mb-4 text-center">
-        Transaction History
-      </h2>
+    <div className="min-h-screen p-1 max-w-3xl mx-auto bg-white rounded-xl shadow-md">
+      <div className="flex items-center gap-3 px-4 py-3">
+        <Link
+          href="/dashboard"
+          className="flex items-center justify-center w-9 h-9 bg-orange-100 text-orange-600 rounded-full hover:bg-orange-200 transition"
+        >
+          <ArrowLeft size={18} />
+        </Link>
+        <h1 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+          <History size={18} className="text-orange-600" />
+          Transaction History
+        </h1>
+      </div>
 
-      <div className="space-y-3">
+      <div className="space-y-3 py-2">
         {currentTransactions.map((tx) => (
           <div
             key={tx.id}

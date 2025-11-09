@@ -31,7 +31,7 @@ export default function LoginPage() {
   useEffect(() => {
     const wakeServer = async () => {
       try {
-        await axios.get(`${API_BASE_URL}/ping`);
+        await axios.get(`${API_BASE_URL}/api/ping`);
       } catch {
         // Ignore wakeup errors
       }

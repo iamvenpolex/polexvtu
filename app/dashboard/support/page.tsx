@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { MessageCircle, ArrowLeft, Mail } from "lucide-react";
+import { MessageCircle, ArrowLeft, Mail, HelpCircle } from "lucide-react";
 import Link from "next/link";
 import axios from "axios";
 
@@ -52,16 +52,19 @@ export default function DashboardSupportPage() {
   if (!user) return <p className="text-center py-20">User not found</p>;
 
   return (
-    <div className="min-h-screen bg-gray-50 px-1 py-12">
+    <div className="min-h-screen bg-gray-50 px-1 ">
       {/* 🔙 Back to Dashboard */}
-      <div className="mb-8">
+      <div className="flex items-center gap-3 px-4 py-3">
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-2 text-sm bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition"
+          className="flex items-center justify-center w-9 h-9 bg-orange-100 text-orange-600 rounded-full hover:bg-orange-200 transition"
         >
-          <ArrowLeft size={16} />
-          <span>Back to Dashboard</span>
+          <ArrowLeft size={18} />
         </Link>
+        <h1 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+          <HelpCircle size={18} className="text-orange-600" />
+          Support
+        </h1>
       </div>
 
       {/* 💬 Support Section */}
@@ -69,7 +72,7 @@ export default function DashboardSupportPage() {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-lg"
+        className="max-w-2xl mx-auto bg-white p-1 rounded-xl shadow-lg"
       >
         <MessageCircle className="text-green-600 mx-auto mb-4" size={50} />
         <h1 className="text-2xl font-bold text-blue-900 mb-3 text-center">
@@ -105,7 +108,7 @@ export default function DashboardSupportPage() {
           onClick={handleSendMessage}
           className="w-full bg-green-600 text-white font-semibold text-lg px-6 py-3 rounded-lg hover:bg-green-700 transition"
         >
-          Chat on WhatsApp
+          Send
         </button>
       </motion.div>
     </div>

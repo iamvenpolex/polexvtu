@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Tv } from "lucide-react";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
@@ -256,16 +256,19 @@ export default function CableTVPage() {
   return (
     <div style={styles.page}>
       <div style={styles.back}>
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-2 text-sm bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition"
-        >
-          <ArrowLeft size={16} />
-          <span>Back to Dashboard</span>
-        </Link>
+        <div className="flex items-center gap-3 px-4 py-3">
+          <Link
+            href="/dashboard"
+            className="flex items-center justify-center w-9 h-9 bg-orange-100 text-orange-600 rounded-full hover:bg-orange-200 transition"
+          >
+            <ArrowLeft size={18} />
+          </Link>
+          <h1 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+            <Tv size={18} className="text-orange-600" />
+            Cable TV Subscription
+          </h1>
+        </div>
       </div>
-
-      <h1 style={styles.title}>Cable TV Subscription</h1>
 
       {/* Provider Buttons */}
       <div style={styles.networkBar}>

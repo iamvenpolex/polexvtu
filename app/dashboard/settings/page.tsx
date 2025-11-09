@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Mail, MessageCircle, ArrowLeft } from "lucide-react";
+import { Mail, MessageCircle, ArrowLeft, Settings } from "lucide-react";
 import Link from "next/link";
 interface User {
   email: string;
@@ -53,21 +53,20 @@ export default function AccountSettingsPage() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* 🔙 Back to Dashboard */}
-      <div className="mb-8">
+      <div className="flex items-center gap-3 px-4 py-3">
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-2 text-sm bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition"
+          className="flex items-center justify-center w-9 h-9 bg-orange-100 text-orange-600 rounded-full hover:bg-orange-200 transition"
         >
-          <ArrowLeft size={16} />
-          <span>Back to Dashboard</span>
+          <ArrowLeft size={18} />
         </Link>
+        <h1 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+          <Settings size={18} className="text-orange-600" />
+          Account Settings
+        </h1>
       </div>
-      <main className="flex-1 flex flex-col items-center justify-center py-16 px-1">
+      <main className="flex-1 flex flex-col items-center justify-center py-2 px-1">
         <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg">
-          <h1 className="text-2xl font-bold text-blue-900 mb-4 text-center">
-            Account Settings
-          </h1>
-
           <p className="text-sm text-gray-600 mb-6 text-center">
             You cannot change your profile here. To update any profile info,
             send a message to admin. For password changes, use the button below.

@@ -1,7 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Bell, CheckCircle2, Info, AlertTriangle } from "lucide-react";
+import {
+  Bell,
+  CheckCircle2,
+  Info,
+  AlertTriangle,
+  ArrowLeft,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -69,20 +75,20 @@ export default function DashboardNotificationsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-100 px-6 py-10">
+    <div className="min-h-screen bg-gray-100 px-1">
       <div className="max-w-3xl mx-auto">
         {/* 🔙 Back button */}
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-2 mb-6 text-sm bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition"
-        >
-          ← Back to Dashboard
-        </Link>
-
-        {/* 🔔 Header */}
-        <div className="flex items-center gap-2 mb-6">
-          <Bell className="text-orange-600" size={28} />
-          <h1 className="text-2xl font-bold text-gray-800">Notifications</h1>
+        <div className="flex items-center gap-3 px-4 py-3">
+          <Link
+            href="/dashboard"
+            className="flex items-center justify-center w-9 h-9 bg-orange-100 text-orange-600 rounded-full hover:bg-orange-200 transition"
+          >
+            <ArrowLeft size={18} />
+          </Link>
+          <h1 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+            <Bell size={18} className="text-orange-600" />
+            Notifications
+          </h1>
         </div>
 
         {loading ? (

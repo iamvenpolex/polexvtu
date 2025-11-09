@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Eye, EyeOff, Gift } from "lucide-react";
+import { Eye, EyeOff, Gift, ArrowLeft, User } from "lucide-react";
 import Link from "next/link";
 
 interface User {
@@ -12,6 +12,7 @@ interface User {
   balance: number;
   reward: number;
   phone: number;
+  gender: string;
 }
 
 const API_BASE_URL =
@@ -51,13 +52,17 @@ export default function ReadOnlyProfilePage() {
   return (
     <div className="min-h-screen bg-gray-100 p-1 sm:p-6">
       <div className="max-w-lg sm:max-w-2xl mx-auto space-y-6">
-        <div>
+        <div className="flex items-center gap-3 px-4 py-3">
           <Link
             href="/dashboard"
-            className="inline-block text-sm bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition"
+            className="flex items-center justify-center w-9 h-9 bg-orange-100 text-orange-600 rounded-full hover:bg-orange-200 transition"
           >
-            &larr; Back to Dashboard
+            <ArrowLeft size={18} />
           </Link>
+          <h1 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+            <User size={18} className="text-orange-600" />
+            Profile Information
+          </h1>
         </div>
 
         {loading && (
@@ -68,10 +73,7 @@ export default function ReadOnlyProfilePage() {
         )}
 
         {user && (
-          <div className="bg-white p-6 rounded-xl shadow-md space-y-4">
-            <h2 className="text-2xl font-semibold text-gray-800">
-              Profile Information
-            </h2>
+          <div className="bg-white p-4 rounded-xl shadow-md space-y-4">
             <div className="flex items-center gap-4 mb-4">
               <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-xl font-bold text-gray-600">
                 {user.first_name[0]}
@@ -94,6 +96,12 @@ export default function ReadOnlyProfilePage() {
               <p className="text-gray-500 text-sm">Phone Number</p>
               <p className="text-gray-800 font-medium break-words">
                 {user.phone}
+              </p>
+            </div>
+            <div>
+              <p className="text-gray-500 text-sm">Gender</p>
+              <p className="text-gray-800 font-medium break-words">
+                {user.gender}
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
@@ -126,7 +134,7 @@ export default function ReadOnlyProfilePage() {
 
             {/* Link to Transactions Page */}
             <Link
-              href="/dashboard/transactions"
+              href="/dashboard/transactionhistory"
               className="text-blue-600 hover:underline mt-4 inline-block"
             >
               View Transaction History
