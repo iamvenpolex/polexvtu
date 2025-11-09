@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   keywords: [
     "TapAm register",
     "TapAm sign up",
+    "tapamng",
+    "tapam",
     "Mipitech registration",
     "Create account TapAm",
     "cheap data in Nigeria",

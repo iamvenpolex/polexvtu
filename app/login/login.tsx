@@ -7,6 +7,7 @@ import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import InfoTicker from "@/components/InfoTicker";
 
 type LoginResponse = {
   token: string;
@@ -107,8 +108,9 @@ export default function LoginPage() {
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="relative z-10 w-11/12 max-w-md bg-white p-8 rounded-xl shadow-lg"
+          className="relative z-10 w-10/10 max-w-md bg-white p-5 rounded-xl shadow-lg"
         >
+          <InfoTicker message="🔥 Special VTU Offer: Get 50% OFF on your first recharge! Limited time only! 🔥" />
           <h1 className="text-2xl font-bold text-center text-blue-900 mb-6">
             Login
           </h1>

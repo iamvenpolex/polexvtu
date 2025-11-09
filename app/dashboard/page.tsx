@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import NotificationPopup from "./components/NotificationPopup";
+import InfoTicker from "@/components/InfoTicker";
 
 import axios, { AxiosError } from "axios";
 import {
@@ -100,6 +101,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-100 p-3 sm:p-6">
       <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
+        <InfoTicker message="🔥 Special VTU Offer: Get 50% OFF on your first recharge! Limited time only! 🔥" />
         {/* ---------------- Wallet Dashboard ---------------- */}
         <div className="bg-white rounded-xl shadow-md p-3 sm:p-6 relative">
           <div className="flex items-center justify-between">
@@ -174,7 +176,7 @@ export default function DashboardPage() {
           <h2 className="text-sm sm:text-base font-semibold text-gray-700 mb-2">
             Fund Wallet
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols- gap-3 sm:gap-4">
             <Link
               href="/dashboard/wallet/fund"
               className="flex flex-col items-center justify-center gap-1 sm:gap-2 bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow text-xs sm:text-sm"
@@ -255,6 +257,28 @@ export default function DashboardPage() {
               Cable TV
             </Link>
           </div>
+        </div>
+
+        {/* ads banner */}
+        <div className="relative bg-gradient-to-r from-yellow-200 via-orange-100 to-yellow-200 border border-orange-400 text-orange-800 px-8 py-6 rounded-xl font-extrabold text-center shadow-lg my-6 overflow-hidden">
+          {/* <!-- Animated emoji / spark effect --> */}
+          <span className="absolute left-2 top-1 animate-bounce text-2xl">
+            🔥
+          </span>
+          <span className="absolute right-2 bottom-1 animate-pulse text-2xl">
+            🔥
+          </span>
+
+          {/* <!-- Main text --> */}
+          <p className="text-lg md:text-xl">
+            Special VTU Offer: Get <span className="text-red-600">50% OFF</span>{" "}
+            on your first recharge!
+          </p>
+
+          {/* <!-- Optional subtext --> */}
+          <p className="text-sm text-orange-700 mt-2">
+            Hurry! Limited time offer.
+          </p>
         </div>
       </div>
     </div>

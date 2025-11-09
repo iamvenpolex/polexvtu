@@ -109,7 +109,7 @@ export default function RegisterPage() {
       >
         <div className="absolute inset-0 bg-black/60"></div>
 
-        <main className="relative flex flex-col items-center justify-center py-20 px-4 z-10 w-full">
+        <main className="relative flex flex-col items-center justify-center py-20 px-1 z-10 w-full">
           <motion.div
             initial={{ opacity: 0, y: -30 }}
             animate={{ opacity: 1, y: 0 }}
