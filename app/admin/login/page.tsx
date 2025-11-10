@@ -14,22 +14,24 @@ export default function AdminLoginPage() {
     setError("");
 
     try {
-      // ✅ Correct backend URL
       const res = await axios.post(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/admin/login`,
         { email, password }
       );
 
-      // ✅ Save token and redirect
+      // ✅ Save token + admin info
       localStorage.setItem("adminToken", res.data.token);
-      router.push("/admin/login");
+      localStorage.setItem("admin", JSON.stringify(res.data.admin));
+      localStorage.setItem("adminRole", res.data.role);
+
+      // ✅ Redirect
+      router.replace("/admin/dashboard");
     } catch (err) {
       const axiosError = err as AxiosError<{ error?: string }>;
       const message =
         axiosError.response?.data?.error || "Login failed. Please try again.";
       setError(message);
 
-      // Log full error to console (for debugging)
       console.error("Admin login error:", axiosError);
     }
   };
