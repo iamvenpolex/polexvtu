@@ -65,6 +65,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       href: "/admin/education-prices",
       icon: <Phone size={20} />,
     },
+    {
+      name: "SMS PRICES",
+      href: "/admin/sms",
+      icon: <Phone size={20} />,
+    },
   ];
 
   return (
