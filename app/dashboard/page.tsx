@@ -14,6 +14,7 @@ import {
   Send,
   Lightbulb,
   GraduationCap,
+  MessageSquare,
   Tv,
   History,
 } from "lucide-react";
@@ -255,6 +256,13 @@ export default function DashboardPage() {
             >
               <Tv className="w-5 h-5 sm:w-6 sm:h-6" />
               Cable TV
+            </Link>
+            <Link
+              href="/dashboard/sms"
+              className="flex flex-col items-center gap-1 sm:gap-2 bg-green-500 hover:bg-green-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow transition text-xs sm:text-sm"
+            >
+              <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6" />
+              SMS
             </Link>
           </div>
         </div>
