@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import NotificationPopup from "./components/NotificationPopup";
 import InfoTicker from "@/components/InfoTicker";
+import Navbar from "./components/Navbar";
 
 import axios, { AxiosError } from "axios";
 import {
@@ -11,12 +12,13 @@ import {
   EyeOff,
   Gift,
   Wallet,
+  PhoneCall,
   Send,
   Lightbulb,
   GraduationCap,
-  MessageSquare,
   Tv,
   History,
+  MoreHorizontal,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -101,6 +103,8 @@ export default function DashboardPage() {
   // ------------------------
   return (
     <div className="min-h-screen bg-gray-100 p-3 sm:p-6">
+      {/* Navbar */}
+      <Navbar />
       <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
         <InfoTicker message="🔥 Special VTU Offer: Get 50% OFF on your first recharge! Limited time only! 🔥" />
         {/* ---------------- Wallet Dashboard ---------------- */}
@@ -230,6 +234,13 @@ export default function DashboardPage() {
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <Link
+              href="/dashboard/airtime"
+              className="flex flex-col items-center gap-1 sm:gap-2 bg-red-500 hover:bg-pink-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow transition text-xs sm:text-sm"
+            >
+              <PhoneCall className="w-5 h-5 sm:w-6 sm:h-6" />
+              Airtime
+            </Link>
+            <Link
               href="/dashboard/data"
               className="flex flex-col items-center gap-1 sm:gap-2 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow transition text-xs sm:text-sm"
             >
@@ -257,12 +268,13 @@ export default function DashboardPage() {
               <Tv className="w-5 h-5 sm:w-6 sm:h-6" />
               Cable TV
             </Link>
+
             <Link
-              href="/dashboard/sms"
+              href="/dashboard/more"
               className="flex flex-col items-center gap-1 sm:gap-2 bg-green-500 hover:bg-green-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow transition text-xs sm:text-sm"
             >
-              <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6" />
-              SMS
+              <MoreHorizontal className="w-5 h-5 sm:w-6 sm:h-6" />
+              More
             </Link>
           </div>
         </div>

@@ -1,31 +1,15 @@
 "use client";
 
-import { FileText, GraduationCap, Gamepad2, Tv, Lightbulb } from "lucide-react";
+import { Gamepad2, MessageSquare } from "lucide-react";
 import Link from "next/link";
 
 export default function MorePage() {
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="min-h-screen bg-gray-100 p-1">
       <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8">
         <h1 className="text-2xl font-bold text-blue-900 mb-6">More Services</h1>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <Link
-            href="/dashboard/bills"
-            className="flex items-center gap-4 bg-purple-600 hover:bg-purple-700 text-white font-medium p-6 rounded-xl shadow transition"
-          >
-            <FileText size={28} />
-            Pay Bills
-          </Link>
-
-          <Link
-            href="/dashboard/education"
-            className="flex items-center gap-4 bg-green-600 hover:bg-green-700 text-white font-medium p-6 rounded-xl shadow transition"
-          >
-            <GraduationCap size={28} />
-            Education
-          </Link>
-
           <Link
             href="/dashboard/betting"
             className="flex items-center gap-4 bg-pink-600 hover:bg-pink-700 text-white font-medium p-6 rounded-xl shadow transition"
@@ -35,19 +19,11 @@ export default function MorePage() {
           </Link>
 
           <Link
-            href="/dashboard/tv"
-            className="flex items-center gap-4 bg-blue-600 hover:bg-blue-700 text-white font-medium p-6 rounded-xl shadow transition"
+            href="/dashboard/sms"
+            className="flex flex-col items-center gap-1 sm:gap-2 bg-green-500 hover:bg-green-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow transition text-xs sm:text-sm"
           >
-            <Tv size={28} />
-            Cable TV
-          </Link>
-
-          <Link
-            href="/dashboard/electricity"
-            className="flex items-center gap-4 bg-yellow-500 hover:bg-yellow-600 text-white font-medium p-6 rounded-xl shadow transition"
-          >
-            <Lightbulb size={28} />
-            Electricity
+            <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6" />
+            SMS
           </Link>
         </div>
 
