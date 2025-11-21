@@ -235,7 +235,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <Link
               href="/dashboard/airtime"
-              className="flex flex-col items-center gap-1 sm:gap-2 bg-red-500 hover:bg-pink-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow transition text-xs sm:text-sm"
+              className="flex flex-col items-center gap-1 sm:gap-2 bg-red-500 hover:bg-red-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow transition text-xs sm:text-sm"
             >
               <PhoneCall className="w-5 h-5 sm:w-6 sm:h-6" />
               Airtime

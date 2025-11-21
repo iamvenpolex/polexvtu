@@ -1,19 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Copy } from "lucide-react";
+import { Copy, ArrowLeft, History, X } from "lucide-react";
 import axios from "axios";
 import Link from "next/link";
-import { ArrowLeft, History } from "lucide-react";
 
 export interface UserTransaction {
   id: number;
   reference: string;
+  type: string;
   amount: number;
   status: string;
   created_at: string;
-  type: string;
   isCredit: boolean;
+  message?: string;
 }
 
 const API_BASE_URL =
@@ -23,9 +23,10 @@ export default function TransactionPage() {
   const [transactions, setTransactions] = useState<UserTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<UserTransaction | null>(null);
+
   const transactionsPerPage = 10;
   const totalPages = Math.ceil(transactions.length / transactionsPerPage);
 
@@ -57,13 +58,6 @@ export default function TransactionPage() {
     fetchTransactions();
   }, []);
 
-  const handleNext = () => {
-    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
-  };
-  const handlePrev = () => {
-    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
-  };
-
   const indexOfLastTx = currentPage * transactionsPerPage;
   const indexOfFirstTx = indexOfLastTx - transactionsPerPage;
   const currentTransactions = transactions.slice(indexOfFirstTx, indexOfLastTx);
@@ -82,11 +76,15 @@ export default function TransactionPage() {
   };
 
   const copyToClipboard = (text: string) => {
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
+    if (navigator.clipboard) {
       navigator.clipboard.writeText(text);
       alert(`Copied: ${text}`);
     }
   };
+
+  const handleNext = () =>
+    currentPage < totalPages && setCurrentPage((p) => p + 1);
+  const handlePrev = () => currentPage > 1 && setCurrentPage((p) => p - 1);
 
   if (loading)
     return <p className="text-center mt-6">Loading transactions...</p>;
@@ -94,6 +92,7 @@ export default function TransactionPage() {
 
   return (
     <div className="min-h-screen p-1 max-w-3xl mx-auto bg-white rounded-xl shadow-md">
+      {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3">
         <Link
           href="/dashboard"
@@ -107,11 +106,13 @@ export default function TransactionPage() {
         </h1>
       </div>
 
+      {/* Transaction List */}
       <div className="space-y-3 py-2">
         {currentTransactions.map((tx) => (
           <div
             key={tx.id}
-            className="p-4 rounded-lg shadow-sm border border-gray-200 bg-gray-50 flex flex-wrap justify-between items-start"
+            className="p-4 rounded-lg shadow-sm border border-gray-200 bg-gray-50 flex flex-wrap justify-between items-start cursor-pointer hover:bg-gray-100"
+            onClick={() => setSelectedTransaction(tx)}
           >
             <div className="w-full sm:w-2/5">
               <p className="text-gray-700 text-xs sm:text-sm font-medium">
@@ -119,8 +120,11 @@ export default function TransactionPage() {
               </p>
               <p className="mt-0.5 font-semibold text-gray-800">{tx.type}</p>
               <p
-                className="text-gray-600 text-xs mt-0.5 flex items-center gap-1 cursor-pointer"
-                onClick={() => copyToClipboard(tx.reference)}
+                className="text-gray-600 text-xs mt-0.5 flex items-center gap-1"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  copyToClipboard(tx.reference);
+                }}
               >
                 Ref: {tx.reference} <Copy size={14} />
               </p>
@@ -152,23 +156,65 @@ export default function TransactionPage() {
       {/* Pagination */}
       <div className="flex justify-center mt-4 space-x-2">
         <button
-          className="px-3 py-1 rounded bg-orange-500 text-white text-sm disabled:bg-gray-300"
+          className="px-3 py-1 rounded bg-orange-500 text-white disabled:bg-gray-300"
           onClick={handlePrev}
           disabled={currentPage === 1}
         >
           Previous
         </button>
-        <span className="px-3 py-1 rounded border border-gray-300 text-sm">
+        <span className="px-3 py-1 rounded border border-gray-300">
           Page {currentPage} of {totalPages}
         </span>
         <button
-          className="px-3 py-1 rounded bg-orange-500 text-white text-sm disabled:bg-gray-300"
+          className="px-3 py-1 rounded bg-orange-500 text-white disabled:bg-gray-300"
           onClick={handleNext}
           disabled={currentPage === totalPages}
         >
           Next
         </button>
       </div>
+
+      {/* Transaction Modal */}
+      {selectedTransaction && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6 relative">
+            <button
+              onClick={() => setSelectedTransaction(null)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+            >
+              <X size={20} />
+            </button>
+
+            <h2 className="text-lg font-bold text-orange-500 mb-4">
+              Transaction Details
+            </h2>
+            <div className="space-y-2 text-sm text-gray-700">
+              <div>
+                <b>Reference:</b> {selectedTransaction.reference}
+              </div>
+              <div>
+                <b>Type:</b> {selectedTransaction.type}
+              </div>
+              <div>
+                <b>Amount:</b> {selectedTransaction.isCredit ? "+" : "-"}₦
+                {selectedTransaction.amount.toLocaleString()}
+              </div>
+              <div>
+                <b>Status:</b> {selectedTransaction.status}
+              </div>
+              <div>
+                <b>Date:</b>{" "}
+                {new Date(selectedTransaction.created_at).toLocaleString()}
+              </div>
+              {selectedTransaction.message && (
+                <div>
+                  <b>Message:</b> {selectedTransaction.message}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

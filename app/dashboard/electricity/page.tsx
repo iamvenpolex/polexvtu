@@ -160,7 +160,7 @@ export default function ElectricityPage() {
 
   return (
     <div
-      style={{ padding: 16, fontFamily: "Inter, sans-serif", color: "#1a1a1a" }}
+      style={{ padding: 0, fontFamily: "Inter, sans-serif", color: "#1a1a1a" }}
     >
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm mb-4">
@@ -179,7 +179,7 @@ export default function ElectricityPage() {
       </header>
 
       {/* Form */}
-      <div style={{ marginBottom: 12 }}>
+      <div style={{ padding: 4, marginBottom: 12 }}>
         <label style={{ color: "#ff8a00", fontWeight: 600 }}>Company</label>
         <select
           value={company}

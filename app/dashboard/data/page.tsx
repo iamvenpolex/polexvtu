@@ -435,7 +435,7 @@ const DARK_TEXT = "#222";
 
 const styles: Record<string, React.CSSProperties> = {
   page: {
-    padding: 5,
+    padding: 0,
     fontFamily: "Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial",
   },
   networkBar: {
@@ -513,6 +513,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
     gap: 14,
+    padding: 4,
   },
   card: {
     background: "#fff",

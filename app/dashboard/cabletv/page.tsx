@@ -256,7 +256,7 @@ export default function CableTVPage() {
   return (
     <div style={styles.page}>
       <div style={styles.back}>
-        <div className="flex items-center gap-3 px-4 py-3">
+        <div className=" sticky flex items-center gap-3 px-4 py-3">
           <Link
             href="/dashboard"
             className="flex items-center justify-center w-9 h-9 bg-orange-100 text-orange-600 rounded-full hover:bg-orange-200 transition"
@@ -378,7 +378,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: "Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial",
   },
   title: { fontSize: 22, fontWeight: 700, color: ORANGE, marginBottom: 12 },
-  back: { marginBottom: 12 },
+  back: { position: "sticky", marginBottom: 12 },
   networkBar: {
     display: "flex",
     gap: 8,

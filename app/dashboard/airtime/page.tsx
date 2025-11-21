@@ -10,7 +10,6 @@ import {
   XCircle,
 } from "lucide-react";
 
-// Type for API response from NelloBytes
 interface AirtimeApiResponse {
   Status?: string;
   Message?: string;
@@ -18,7 +17,6 @@ interface AirtimeApiResponse {
   [key: string]: unknown;
 }
 
-// Type for a transaction object from your backend
 interface Transaction {
   id: number;
   user_id: number;
@@ -38,9 +36,9 @@ interface Transaction {
   message_id?: string;
 }
 
-// Type for the full Airtime response
 interface AirtimeResponse {
   success?: boolean;
+  status?: string;
   requestID?: string;
   transaction?: Transaction;
   apiResponse?: AirtimeApiResponse;
@@ -59,9 +57,8 @@ export default function AirtimePage() {
 
   const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
-  // Show modal helper
-  const showModal = (message: string) => {
-    setModalData({ error: message });
+  const showModal = (data: AirtimeResponse) => {
+    setModalData(data);
     setModalOpen(true);
   };
 
@@ -69,19 +66,22 @@ export default function AirtimePage() {
     e.preventDefault();
 
     if (!network || !amount || !phone) {
-      showModal("All fields are required");
-      return;
+      return showModal({ error: "All fields are required" });
     }
 
     if (Number(amount) < 50) {
-      showModal("Minimum airtime amount is 50 Naira");
-      return;
+      return showModal({ error: "Minimum airtime amount is 50 Naira" });
+    }
+
+    if (!/^0[0-9]{10}$/.test(phone)) {
+      return showModal({ error: "Enter a valid 11-digit phone number" });
     }
 
     setLoading(true);
 
     try {
-      const token = localStorage.getItem("token"); // Make sure JWT is stored here
+      const token = localStorage.getItem("token");
+
       const res = await fetch(`${BASE_URL}/api/airtime/buy`, {
         method: "POST",
         headers: {
@@ -93,15 +93,14 @@ export default function AirtimePage() {
 
       const data: AirtimeResponse = await res.json();
 
-      if (data.error) {
-        showModal(data.error);
-      } else {
-        setModalData(data);
-        setModalOpen(true);
+      if (!res.ok) {
+        return showModal({ error: data.error || "Something went wrong" });
       }
+
+      showModal(data);
     } catch (err) {
       console.error(err);
-      showModal("Something went wrong, try again!");
+      showModal({ error: "Network error — please try again" });
     } finally {
       setLoading(false);
     }
@@ -182,7 +181,7 @@ export default function AirtimePage() {
             </div>
           </div>
 
-          {/* Submit Button */}
+          {/* Submit */}
           <button
             type="submit"
             disabled={loading}
@@ -193,10 +192,10 @@ export default function AirtimePage() {
         </form>
       </div>
 
-      {/* Modal */}
+      {/* MODAL */}
       {modalOpen && modalData && (
         <div
-          className="fixed inset-0 bg-black/40 flex items-end justify-center z-[999]"
+          className="fixed inset-0 bg-black/40 flex items-end justify-center z-50"
           onClick={() => setModalOpen(false)}
         >
           <div
@@ -212,11 +211,13 @@ export default function AirtimePage() {
             </div>
 
             <h2 className="text-center text-xl font-semibold text-gray-800">
-              {modalData.error ? "Error" : "Success"}
+              {modalData.error ? "Error" : "Airtime Request Sent"}
             </h2>
 
             <p className="text-center text-gray-600 mt-1">
-              {modalData.apiResponse?.Message || modalData.error || ""}
+              {modalData.error ||
+                modalData.apiResponse?.Message ||
+                "Your airtime purchase has been processed"}
             </p>
 
             <div className="mt-4 space-y-2 text-gray-700 text-sm">
@@ -226,21 +227,24 @@ export default function AirtimePage() {
                   {modalData.requestID}
                 </p>
               )}
+
+              {modalData.status && (
+                <p>
+                  <span className="font-semibold">Status:</span>{" "}
+                  {modalData.status}
+                </p>
+              )}
+
               {modalData.apiResponse?.TransactionID && (
                 <p>
                   <span className="font-semibold">Transaction ID:</span>{" "}
                   {modalData.apiResponse.TransactionID}
                 </p>
               )}
-              {modalData.apiResponse?.Status && (
-                <p>
-                  <span className="font-semibold">Status:</span>{" "}
-                  {modalData.apiResponse.Status}
-                </p>
-              )}
+
               {modalData.balanceAfter !== undefined && (
                 <p>
-                  <span className="font-semibold">Balance After:</span>{" "}
+                  <span className="font-semibold">Balance After:</span> ₦
                   {modalData.balanceAfter}
                 </p>
               )}
@@ -259,11 +263,11 @@ export default function AirtimePage() {
       {/* Modal Animation */}
       <style>{`
         .animate-slide-up {
-          animation: slideUp 0.3s ease-out;
+          animation: slideUp 0.28s ease-out;
         }
         @keyframes slideUp {
-          from { transform: translateY(100%); }
-          to { transform: translateY(0); }
+          from { transform: translateY(100%); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
         }
       `}</style>
     </div>

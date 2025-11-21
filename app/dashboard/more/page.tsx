@@ -20,9 +20,9 @@ export default function MorePage() {
 
           <Link
             href="/dashboard/sms"
-            className="flex flex-col items-center gap-1 sm:gap-2 bg-green-500 hover:bg-green-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow transition text-xs sm:text-sm"
+            className="flex items-center gap-4 bg-green-500 hover:bg-green-600 text-white font-medium p-6 rounded-xl shadow transition"
           >
-            <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6" />
+            <MessageSquare size={28} />
             SMS
           </Link>
         </div>

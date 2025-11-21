@@ -101,7 +101,7 @@ const SMSPage = () => {
   };
 
   return (
-    <div className="max-w-xl mx-auto p-1">
+    <div className="max-w-xl mx-auto ">
       {/* HEADER */}
       <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-orange-100 shadow-sm mb-6">
         <div className="flex items-center gap-3 px-2 py-4">

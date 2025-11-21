@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Bell, User, LogOut, HelpCircle, Settings } from "lucide-react";
+import { Bell, User, LogOut, HelpCircle, Settings, Ticket } from "lucide-react";
 import Link from "next/link";
 
 import { useAuth } from "@/context/AuthContext"; // ✅ import context
@@ -33,6 +33,15 @@ export default function Navbar() {
 
         {/* Right side actions */}
         <div className="flex items-center gap-4 sm:gap-6">
+          {/* Giftcard */}
+          <Link
+            href="/dashboard/giftcard"
+            className="flex items-center gap-2 text-gray-600 hover:text-orange-500"
+          >
+            <Ticket size={22} />
+            <span className="hidden sm:inline">GiftCard</span>
+          </Link>
+
           {/* Support */}
           <Link
             href="/dashboard/support"

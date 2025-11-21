@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import axios, { AxiosResponse } from "axios";
 import Link from "next/link";
-import { ArrowLeft, Copy, History } from "lucide-react";
+import { ArrowLeft, Copy, History, X } from "lucide-react";
 
 interface TapamHistory {
   id: number;
@@ -22,9 +22,9 @@ export default function TapamHistoryPage() {
   const [history, setHistory] = useState<TapamHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
-  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedTx, setSelectedTx] = useState<TapamHistory | null>(null);
+
   const transactionsPerPage = 10;
 
   useEffect(() => {
@@ -33,9 +33,7 @@ export default function TapamHistoryPage() {
         const token = localStorage.getItem("token");
         const response: AxiosResponse<TapamHistory[]> = await axios.get(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/transactions/tapam`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
 
         const filtered = response.data.filter(
@@ -78,20 +76,19 @@ export default function TapamHistoryPage() {
     );
 
   const copyToClipboard = (text: string) => {
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
+    if (navigator.clipboard) {
       navigator.clipboard.writeText(text);
       alert(`Copied: ${text}`);
     }
   };
 
-  // Pagination calculations
   const indexOfLast = currentPage * transactionsPerPage;
   const indexOfFirst = indexOfLast - transactionsPerPage;
   const currentTransactions = history.slice(indexOfFirst, indexOfLast);
   const totalPages = Math.ceil(history.length / transactionsPerPage);
 
   return (
-    <div className=" sm:p-6 max-w-2xl mx-auto">
+    <div className="sm:p-6 max-w-2xl mx-auto">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm">
         <div className="flex items-center gap-3 px-4 py-3">
@@ -112,7 +109,8 @@ export default function TapamHistoryPage() {
         {currentTransactions.map((item) => (
           <div
             key={item.id}
-            className="p-3 sm:p-4 rounded-lg shadow-sm border border-gray-200 bg-gray-50"
+            className="p-3 sm:p-4 rounded-lg shadow-sm border border-gray-200 bg-gray-50 cursor-pointer hover:bg-gray-100"
+            onClick={() => setSelectedTx(item)}
           >
             <div className="flex justify-between items-start flex-wrap">
               <div className="w-full sm:w-2/5">
@@ -132,6 +130,7 @@ export default function TapamHistoryPage() {
                     </p>
                   )}
               </div>
+
               <div className="w-full sm:w-1/5 mt-2 sm:mt-0 text-right">
                 <span
                   className={`font-bold text-sm sm:text-base ${
@@ -142,6 +141,7 @@ export default function TapamHistoryPage() {
                   {Number(item.amount).toLocaleString()}
                 </span>
               </div>
+
               <div className="w-full sm:w-1/5 mt-2 sm:mt-0 text-right">
                 <span
                   className={`px-2 py-0.5 text-xs rounded-full font-medium ${
@@ -153,9 +153,13 @@ export default function TapamHistoryPage() {
                   {item.status.toUpperCase()}
                 </span>
               </div>
+
               <div
                 className="w-full sm:w-1/5 mt-2 sm:mt-0 flex items-center justify-end gap-1 text-gray-600 text-xs sm:text-sm cursor-pointer hover:text-orange-600 transition"
-                onClick={() => copyToClipboard(item.reference)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  copyToClipboard(item.reference);
+                }}
               >
                 <span className="truncate">{item.reference}</span>
                 <Copy size={14} className="flex-shrink-0" />
@@ -187,6 +191,52 @@ export default function TapamHistoryPage() {
           Next
         </button>
       </div>
+
+      {/* Modal */}
+      {selectedTx && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6 relative">
+            <button
+              onClick={() => setSelectedTx(null)}
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+            >
+              <X size={20} />
+            </button>
+
+            <h2 className="text-lg text-orange-500 font-bold mb-4">
+              Transaction Details
+            </h2>
+            <div className="space-y-2 text-sm text-gray-700">
+              <div>
+                <b>Reference:</b> {selectedTx.reference}
+              </div>
+              <div>
+                <b>Description:</b>{" "}
+                {selectedTx.description.includes("Reward")
+                  ? "Reward → Wallet"
+                  : selectedTx.description}
+              </div>
+              {selectedTx.source === "tapam" &&
+                selectedTx.sender_name !== selectedTx.receiver_name && (
+                  <div>
+                    <b>From:</b> {selectedTx.sender_name} <br />
+                    <b>To:</b> {selectedTx.receiver_name}
+                  </div>
+                )}
+              <div>
+                <b>Amount:</b> {selectedTx.isCredit ? "+" : "-"}₦
+                {Number(selectedTx.amount).toLocaleString()}
+              </div>
+              <div>
+                <b>Status:</b> {selectedTx.status.toUpperCase()}
+              </div>
+              <div>
+                <b>Date:</b> {new Date(selectedTx.created_at).toLocaleString()}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -70,6 +70,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       href: "/admin/sms",
       icon: <Phone size={20} />,
     },
+    {
+      name: "GIFT CARD",
+      href: "/admin/giftcard",
+      icon: <Phone size={20} />,
+    },
   ];
 
   return (
