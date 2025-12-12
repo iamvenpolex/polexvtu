@@ -4,6 +4,7 @@ import { Poppins } from "next/font/google";
 import "./globals.css";
 import PageLoader from "@/components/PageLoader";
 import { AuthProvider } from "@/context/AuthContext";
+import InstallButton from "@/components/InstallButton";
 
 // Load Poppins
 const poppins = Poppins({
@@ -21,9 +22,9 @@ export const metadata: Metadata = {
   keywords: [
     "TapAm",
     "Mipitech",
-    "Data Subscription in nigeria",
+    "Data Subscription in Nigeria",
     "Electricity Bill Payment",
-    "TV Subscription in nigeria",
+    "TV Subscription in Nigeria",
     "tapamng",
     "Tapam.ng",
     "Tapam.com.ng",
@@ -31,10 +32,10 @@ export const metadata: Metadata = {
     "Utility Payments Nigeria",
     "cheap data in Nigeria",
     "cheap data in top up",
-    "buy cheap data in nigeria",
+    "buy cheap data in Nigeria",
     "affordable airtime top-up",
     "cheap electricity bills in Nigeria",
-    "discounted TV subscription in nigeria",
+    "discounted TV subscription in Nigeria",
     "TapAm VTU platform",
   ],
   authors: [{ name: "Mipitech" }],
@@ -72,21 +73,6 @@ export const metadata: Metadata = {
     icon: "/favicon.ico",
     apple: "/tapam-logo1.jpg",
   },
-
-  alternates: {
-    canonical: "https://tapam.mipitech.com.ng",
-  },
-
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
-  },
 };
 
 export default function RootLayout({
@@ -96,9 +82,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        {/* PWA Manifest */}
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#0d6efd" />
+        <link rel="apple-touch-icon" href="/tapam-logo1.jpg" />
+      </head>
       <body className={`${poppins.className} antialiased`}>
         <AuthProvider>
           <PageLoader>{children}</PageLoader>
+          <InstallButton />
         </AuthProvider>
       </body>
     </html>

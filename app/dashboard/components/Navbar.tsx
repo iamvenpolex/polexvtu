@@ -39,7 +39,7 @@ export default function Navbar() {
             className="flex items-center gap-2 text-gray-600 hover:text-orange-500"
           >
             <Ticket size={22} />
-            <span className="hidden sm:inline">GiftCard</span>
+            <span className="hidden sm:inline">Coupon</span>
           </Link>
 
           {/* Support */}

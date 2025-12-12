@@ -57,7 +57,7 @@ export default function GiftCardUserPage() {
 
   const redeemCard = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!code) return showMessage("Please enter a gift card code");
+    if (!code) return showMessage("Please enter a coupon card code");
 
     try {
       setRedeeming(true);
@@ -106,7 +106,7 @@ export default function GiftCardUserPage() {
           </Link>
           <h1 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
             <Ticket size={18} className="text-orange-600" />
-            Gift Cards
+            Coupons
           </h1>
         </div>
       </header>
@@ -117,7 +117,7 @@ export default function GiftCardUserPage() {
           type="text"
           value={code}
           onChange={(e) => setCode(e.target.value)}
-          placeholder="Enter gift card code"
+          placeholder="Enter coupon code"
           className="w-full border rounded px-3 text-black py-2 mb-2"
         />
         <button
