@@ -10,12 +10,12 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/tapam-logo1-192.png",
+      "src": "/tapam-logo1.jpg",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/tapam-logo1-512.png",
+      "src": "/CompressJPEG.Online_img(512x512).png",
       "sizes": "512x512",
       "type": "image/png"
     }
