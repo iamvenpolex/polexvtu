@@ -178,6 +178,14 @@ export default function ElectricityPage() {
         </div>
       </header>
 
+      {/* CTA Button */}
+      <Link
+        href="/dashboard/eduelecthistory" // or your history route
+        className="px-4 py-2 bg-orange-500 text-white font-semibold rounded hover:bg-orange-600 transition"
+      >
+        View History
+      </Link>
+
       {/* Form */}
       <div style={{ padding: 4, marginBottom: 12 }}>
         <label style={{ color: "#ff8a00", fontWeight: 600 }}>Company</label>

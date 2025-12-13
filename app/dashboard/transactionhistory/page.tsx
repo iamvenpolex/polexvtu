@@ -93,13 +93,16 @@ export default function TransactionPage() {
   return (
     <div className="min-h-screen p-1 max-w-3xl mx-auto bg-white rounded-xl shadow-md">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3">
+      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm mb-4 flex items-center gap-4 px- py-3">
+        {/* Back Button */}
         <Link
           href="/dashboard"
           className="flex items-center justify-center w-9 h-9 bg-orange-100 text-orange-600 rounded-full hover:bg-orange-200 transition"
         >
           <ArrowLeft size={18} />
         </Link>
+
+        {/* Title */}
         <h1 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
           <History size={18} className="text-orange-600" />
           Transaction History

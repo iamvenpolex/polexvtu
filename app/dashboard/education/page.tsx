@@ -104,7 +104,7 @@ export default function EducationPage() {
   };
 
   return (
-    <div style={{ padding: 16, fontFamily: "Inter, sans-serif" }}>
+    <div style={{ padding: 10, fontFamily: "Inter, sans-serif" }}>
       <div className="flex items-center gap-3 px-4 py-3">
         <Link
           href="/dashboard"
@@ -118,10 +118,18 @@ export default function EducationPage() {
         </h1>
       </div>
 
+      {/* CTA Button */}
+      <Link
+        href="/dashboard/eduelecthistory" // or your history route
+        className="px-4 py-2 bg-orange-500 text-white font-semibold rounded hover:bg-orange-600 transition"
+      >
+        View History
+      </Link>
+
       {message && (
         <div
           style={{
-            margin: "12px 0",
+            margin: "12px ",
             padding: 12,
             borderRadius: 8,
             background: message.type === "error" ? "#ffe9e6" : "#e6f9ec",
@@ -137,7 +145,7 @@ export default function EducationPage() {
         <p>Loading products...</p>
       ) : (
         <>
-          <div style={{ marginBottom: 12 }}>
+          <div style={{ marginBottom: 12, marginTop: 15 }}>
             <label style={{ color: "#ff8a00", fontWeight: 600 }}>
               Select Product
             </label>
