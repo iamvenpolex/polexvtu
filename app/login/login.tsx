@@ -120,7 +120,7 @@ export default function LoginPage() {
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
-                type="text"
+                type="email"
                 placeholder="Email or Phone"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
