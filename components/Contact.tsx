@@ -43,7 +43,7 @@ export default function Contact() {
             <Phone className="w-6 h-6 text-orange-500" />
             <div>
               <p className="font-semibold text-gray-900">Phone</p>
-              <p className="text-gray-600">+234 803 264 8367 (whatsapp only)</p>
+              <p className="text-gray-600">+234 708 371 8631 (whatsapp only)</p>
             </div>
           </div>
 
@@ -60,8 +60,7 @@ export default function Contact() {
             <div>
               <p className="font-semibold text-gray-900">Office</p>
               <p className="text-gray-600">
-                24, Red Block street, Behind University of Ibadan, Ibadan. Oyo
-                State. Nigeria.
+                ijapo Extension, Akure, Ondo State.
               </p>
             </div>
           </div>
