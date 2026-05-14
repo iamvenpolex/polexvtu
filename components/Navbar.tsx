@@ -29,7 +29,7 @@ export default function Navbar() {
           if (entry.isIntersecting) setActiveSection(entry.target.id);
         });
       },
-      { root: null, rootMargin: "0px", threshold: 0.5 }
+      { root: null, rootMargin: "0px", threshold: 0.5 },
     );
     sections.forEach((sec) => sec && observer.observe(sec));
 

@@ -15,12 +15,25 @@ import {
   EyeOff,
   Check,
   X,
+  Loader2,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
+type FormDataType = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  gender: string;
+  password: string;
+  confirmPassword: string;
+  referral: string;
+};
+
 export default function RegisterPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
+
+  const [formData, setFormData] = useState<FormDataType>({
     firstName: "",
     lastName: "",
     email: "",
@@ -30,13 +43,14 @@ export default function RegisterPage() {
     confirmPassword: "",
     referral: "",
   });
+
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -65,14 +79,16 @@ export default function RegisterPage() {
     // Strong password validation
     const strongPasswordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&._-]).{8,}$/;
+
     if (!strongPasswordRegex.test(formData.password)) {
       setMessage(
-        "❌ Password must include uppercase, lowercase, number, special character, and be at least 8 characters long."
+        "❌ Password must include uppercase, lowercase, number, special character, and be at least 8 characters long.",
       );
       return;
     }
 
     setLoading(true);
+
     try {
       const res = await fetch(
         "https://polexvtu-backend.onrender.com/api/auth/register",
@@ -80,7 +96,7 @@ export default function RegisterPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(formData),
-        }
+        },
       );
 
       const data = await res.json();
@@ -88,12 +104,16 @@ export default function RegisterPage() {
       if (!res.ok) throw new Error(data.message || "Registration failed");
 
       localStorage.setItem("token", data.token);
+
       setMessage("✅ Registration successful! Redirecting…");
 
       setTimeout(() => router.push("/login"), 1000);
     } catch (error: unknown) {
-      if (error instanceof Error) setMessage("❌ " + error.message);
-      else setMessage("❌ Something went wrong");
+      if (error instanceof Error) {
+        setMessage("❌ " + error.message);
+      } else {
+        setMessage("❌ Something went wrong");
+      }
     } finally {
       setLoading(false);
     }
@@ -109,7 +129,7 @@ export default function RegisterPage() {
       >
         <div className="absolute inset-0 bg-black/60"></div>
 
-        <main className="relative flex flex-col items-center justify-center py-20 px-1 z-10 w-full">
+        <main className="relative flex flex-col items-center justify-center py-20 px-2 z-10 w-full">
           <motion.div
             initial={{ opacity: 0, y: -30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -127,6 +147,7 @@ export default function RegisterPage() {
               {/* First Name */}
               <div className="flex items-center border rounded-lg px-3 py-2">
                 <User className="text-gray-400 w-5 h-5 mr-2" />
+
                 <input
                   type="text"
                   name="firstName"
@@ -141,6 +162,7 @@ export default function RegisterPage() {
               {/* Last Name */}
               <div className="flex items-center border rounded-lg px-3 py-2">
                 <User className="text-gray-400 w-5 h-5 mr-2" />
+
                 <input
                   type="text"
                   name="lastName"
@@ -155,6 +177,7 @@ export default function RegisterPage() {
               {/* Email */}
               <div className="flex items-center border rounded-lg px-3 py-2">
                 <Mail className="text-gray-400 w-5 h-5 mr-2" />
+
                 <input
                   type="email"
                   name="email"
@@ -169,6 +192,7 @@ export default function RegisterPage() {
               {/* Phone */}
               <div className="flex items-center border rounded-lg px-3 py-2">
                 <Phone className="text-gray-400 w-5 h-5 mr-2" />
+
                 <input
                   type="text"
                   name="phone"
@@ -183,6 +207,7 @@ export default function RegisterPage() {
               {/* Gender */}
               <div className="flex items-center border rounded-lg px-3 py-2">
                 <Users className="text-gray-400 w-5 h-5 mr-2" />
+
                 <select
                   name="gender"
                   value={formData.gender}
@@ -199,6 +224,7 @@ export default function RegisterPage() {
               {/* Referral */}
               <div className="flex items-center border rounded-lg px-3 py-2">
                 <Gift className="text-gray-400 w-5 h-5 mr-2" />
+
                 <input
                   type="text"
                   name="referral"
@@ -213,6 +239,7 @@ export default function RegisterPage() {
               <div className="md:col-span-2">
                 <div className="flex items-center border rounded-lg px-3 py-2">
                   <Lock className="text-gray-400 w-5 h-5 mr-2" />
+
                   <input
                     type={showPassword ? "text" : "password"}
                     name="password"
@@ -222,6 +249,7 @@ export default function RegisterPage() {
                     required
                     className="w-full bg-transparent outline-none text-gray-800"
                   />
+
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
@@ -231,15 +259,17 @@ export default function RegisterPage() {
                   </button>
                 </div>
 
-                {/* Password Strength Checklist (visible only when typing) */}
+                {/* Password Rules */}
                 {formData.password.length > 0 && (
                   <div className="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm">
                     <p className="text-gray-700 font-semibold mb-2">
                       Password must contain:
                     </p>
+
                     <ul className="space-y-1">
                       {passwordRules.map((rule, index) => {
                         const valid = rule.test.test(formData.password);
+
                         return (
                           <li key={index} className="flex items-center gap-2">
                             {valid ? (
@@ -247,6 +277,7 @@ export default function RegisterPage() {
                             ) : (
                               <X className="text-red-500 w-4 h-4" />
                             )}
+
                             <span
                               className={`${
                                 valid ? "text-green-600" : "text-gray-700"
@@ -265,6 +296,7 @@ export default function RegisterPage() {
               {/* Confirm Password */}
               <div className="flex items-center border rounded-lg px-3 py-2 md:col-span-2">
                 <Lock className="text-gray-400 w-5 h-5 mr-2" />
+
                 <input
                   type={showConfirm ? "text" : "password"}
                   name="confirmPassword"
@@ -274,6 +306,7 @@ export default function RegisterPage() {
                   required
                   className="w-full bg-transparent outline-none text-gray-800"
                 />
+
                 <button
                   type="button"
                   onClick={() => setShowConfirm(!showConfirm)}
@@ -288,9 +321,11 @@ export default function RegisterPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition"
+                  className="w-full py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition flex items-center justify-center gap-2 disabled:opacity-70"
                 >
-                  {loading ? "Please wait…" : "Register"}
+                  {loading && <Loader2 className="animate-spin" size={18} />}
+
+                  {loading ? "Creating Account..." : "Register"}
                 </button>
               </div>
             </form>

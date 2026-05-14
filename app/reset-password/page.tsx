@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import axios from "axios";
-import { Lock, Check, X, Eye, EyeOff } from "lucide-react";
+import { Lock, Check, X, Eye, EyeOff, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -21,7 +21,6 @@ export default function ResetPasswordPage() {
     process.env.NEXT_PUBLIC_API_BASE_URL ||
     "https://polexvtu-backend.onrender.com";
 
-  // Password rules
   const passwordRules = [
     { label: "At least 8 characters", test: /.{8,}/ },
     { label: "At least one uppercase letter", test: /[A-Z]/ },
@@ -42,23 +41,23 @@ export default function ResetPasswordPage() {
     const code = localStorage.getItem("resetCode");
 
     if (!email || !code) {
-      setMessage("❌ Verification required. Go back and verify your email.");
+      setMessage("Verification required. Please restart the reset process.");
       setLoading(false);
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setMessage("❌ Passwords do not match.");
+      setMessage("Passwords do not match.");
       setLoading(false);
       return;
     }
 
-    // Strong password validation
     const strongPasswordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&._-]).{8,}$/;
+
     if (!strongPasswordRegex.test(newPassword)) {
       setMessage(
-        "❌ Password must include uppercase, lowercase, number, special character, and be at least 8 characters long."
+        "Password must include uppercase, lowercase, number, special character, and be at least 8 characters long.",
       );
       setLoading(false);
       return;
@@ -71,7 +70,7 @@ export default function ResetPasswordPage() {
           emailOrPhone: email,
           code,
           newPassword,
-        }
+        },
       );
 
       setMessage(res.data.message);
@@ -79,15 +78,13 @@ export default function ResetPasswordPage() {
       if (res.data.success) {
         localStorage.removeItem("resetEmail");
         localStorage.removeItem("resetCode");
-        setTimeout(() => router.push("/login"), 2000);
+        setTimeout(() => router.push("/login"), 1500);
       }
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        setMessage(
-          err.response?.data?.message || "❌ Failed to reset password."
-        );
+        setMessage(err.response?.data?.message || "Failed to reset password.");
       } else {
-        setMessage("❌ Something went wrong. Please try again.");
+        setMessage("Something went wrong. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -105,14 +102,14 @@ export default function ResetPasswordPage() {
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="relative z-10 w-11/12 max-w-md bg-white p-8 rounded-xl shadow-lg"
+          className="relative z-10 w-full max-w-md bg-white p-6 rounded-xl shadow-lg"
         >
-          <h1 className="text-2xl font-bold text-center text-blue-900 mb-6">
+          <h1 className="text-2xl font-bold text-center text-blue-900 mb-2">
             Reset Password
           </h1>
 
-          <p className="text-center text-gray-600 mb-4 text-sm">
-            Enter your new password below.
+          <p className="text-center text-gray-600 mb-5 text-sm">
+            Create a new secure password for your account.
           </p>
 
           <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
@@ -125,37 +122,35 @@ export default function ResetPasswordPage() {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 required
-                className="w-full pl-10 pr-4 py-2 border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
+                className="w-full pl-10 pr-10 py-2 border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
 
-            {/* Password Strength Checklist */}
+            {/* Password checklist */}
             {newPassword.length > 0 && (
-              <div className="mt-2 bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm">
-                <p className="text-gray-700 font-semibold mb-2">
-                  Password must contain:
+              <div className="bg-gray-50 border rounded-lg p-3 text-sm">
+                <p className="font-semibold mb-2 text-gray-700">
+                  Password requirements:
                 </p>
                 <ul className="space-y-1">
-                  {passwordRules.map((rule, index) => {
+                  {passwordRules.map((rule, i) => {
                     const valid = rule.test.test(newPassword);
                     return (
-                      <li key={index} className="flex items-center gap-2">
+                      <li key={i} className="flex items-center gap-2">
                         {valid ? (
                           <Check className="text-green-500 w-4 h-4" />
                         ) : (
                           <X className="text-red-500 w-4 h-4" />
                         )}
                         <span
-                          className={`${
-                            valid ? "text-green-600" : "text-gray-700"
-                          }`}
+                          className={valid ? "text-green-600" : "text-gray-600"}
                         >
                           {rule.label}
                         </span>
@@ -175,12 +170,12 @@ export default function ResetPasswordPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                className="w-full pl-10 pr-4 py-2 border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
+                className="w-full pl-10 pr-10 py-2 border text-black border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirm(!showConfirm)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
               >
                 {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -190,7 +185,9 @@ export default function ResetPasswordPage() {
             {message && (
               <p
                 className={`text-center text-sm ${
-                  message.startsWith("✅") ? "text-green-600" : "text-red-600"
+                  message.toLowerCase().includes("success")
+                    ? "text-green-600"
+                    : "text-red-600"
                 }`}
               >
                 {message}
@@ -200,10 +197,10 @@ export default function ResetPasswordPage() {
             {/* Submit */}
             <button
               type="submit"
-              disabled={loading}
-              className="w-full py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition disabled:opacity-50"
+              className="w-full py-2 bg-orange-500 text-white rounded-lg font-semibold hover:bg-orange-600 transition flex items-center justify-center gap-2"
             >
-              {loading ? "Resetting..." : "Reset Password"}
+              {loading && <Loader2 className="animate-spin" size={18} />}
+              {loading ? "Resetting Password..." : "Reset Password"}
             </button>
           </form>
         </motion.div>

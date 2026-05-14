@@ -44,7 +44,7 @@ export default function WalletTapamPage() {
       "Content-Type": "application/json",
       Authorization: token ? `Bearer ${token}` : "",
     }),
-    [token]
+    [token],
   );
 
   // ✅ Fetch balance
@@ -71,7 +71,7 @@ export default function WalletTapamPage() {
     try {
       const res = await axios.get(
         `${API_BASE_URL}/api/withdraw/tapam/lookup?email=${email}`,
-        { headers }
+        { headers },
       );
       setRecipientName(res.data.name || "");
     } catch {
@@ -95,7 +95,7 @@ export default function WalletTapamPage() {
       const res = await axios.post(
         `${API_BASE_URL}/api/withdraw/wallet-to-tapam`,
         { amount: numericAmount, email, recipientName },
-        { headers }
+        { headers },
       );
 
       const reference =
@@ -148,7 +148,7 @@ export default function WalletTapamPage() {
           img.src =
             "data:image/svg+xml;charset=utf-8," +
             encodeURIComponent(
-              `<svg xmlns='http://www.w3.org/2000/svg' fill='green' viewBox='0 0 24 24'><path d='M12 0a12 12 0 1 0 12 12A12 12 0 0 0 12 0zm-1.2 17.4-4.8-4.8 1.4-1.4 3.4 3.4 6.6-6.6 1.4 1.4z'/></svg>`
+              `<svg xmlns='http://www.w3.org/2000/svg' fill='green' viewBox='0 0 24 24'><path d='M12 0a12 12 0 1 0 12 12A12 12 0 0 0 12 0zm-1.2 17.4-4.8-4.8 1.4-1.4 3.4 3.4 6.6-6.6 1.4 1.4z'/></svg>`,
             );
           img.width = 50;
           img.height = 50;
@@ -203,6 +203,7 @@ export default function WalletTapamPage() {
           loading={loading}
           message={message}
           walletBalance={walletBalance}
+          isSearching={false}
         />
       </main>
 
