@@ -35,7 +35,7 @@ export default function RewardWalletPage() {
       "Content-Type": "application/json",
       Authorization: token ? `Bearer ${token}` : "",
     }),
-    [token]
+    [token],
   );
 
   const fetchReward = useCallback(async () => {
@@ -43,7 +43,7 @@ export default function RewardWalletPage() {
     try {
       const response = await axios.get<{ reward: number }>(
         `${API_BASE_URL}/api/wallet/balance`,
-        { headers }
+        { headers },
       );
       setRewardBalance(response.data.reward);
     } catch (error: unknown) {
@@ -69,7 +69,7 @@ export default function RewardWalletPage() {
       await axios.post(
         `${API_BASE_URL}/api/withdraw/reward-to-wallet`,
         { amount: numericAmount },
-        { headers }
+        { headers },
       );
 
       const newReceipt: ReceiptData = {

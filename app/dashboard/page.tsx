@@ -72,7 +72,7 @@ export default function DashboardPage() {
           `${API_BASE_URL}/api/user/profile`,
           {
             headers: { Authorization: `Bearer ${token}` },
-          }
+          },
         );
 
         setUser(response.data);
@@ -279,26 +279,47 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* ads banner */}
-        <div className="relative bg-gradient-to-r from-yellow-200 via-orange-100 to-yellow-200 border border-orange-400 text-orange-800 px-8 py-6 rounded-xl font-extrabold text-center shadow-lg my-6 overflow-hidden">
-          {/* <!-- Animated emoji / spark effect --> */}
-          <span className="absolute left-2 top-1 animate-bounce text-2xl">
-            🔥
-          </span>
-          <span className="absolute right-2 bottom-1 animate-pulse text-2xl">
-            🔥
-          </span>
+        {/* ADS BANNER */}
+        <div className="relative overflow-hidden rounded-2xl border border-orange-200 bg-gradient-to-br from-yellow-50 via-orange-100 to-yellow-100 shadow-xl my-6">
+          {/* Glow effects */}
+          <div className="absolute -top-10 -left-10 h-32 w-32 bg-orange-300/30 blur-3xl rounded-full" />
+          <div className="absolute -bottom-10 -right-10 h-32 w-32 bg-yellow-300/30 blur-3xl rounded-full" />
 
-          {/* <!-- Main text --> */}
-          <p className="text-lg md:text-xl">
-            Special VTU Offer: Get <span className="text-red-600">50% OFF</span>{" "}
-            on your first recharge!
-          </p>
+          {/* Floating icons */}
+          <div className="absolute top-3 left-4 text-2xl animate-bounce">
+            🔥
+          </div>
+          <div className="absolute bottom-3 right-4 text-2xl animate-pulse">
+            ⚡
+          </div>
 
-          {/* <!-- Optional subtext --> */}
-          <p className="text-sm text-orange-700 mt-2">
-            Hurry! Limited time offer.
-          </p>
+          <div className="relative z-10 px-6 py-6 text-center">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md mb-3">
+              LIMITED OFFER
+            </div>
+
+            {/* Main headline */}
+            <h2 className="text-xl md:text-2xl font-extrabold text-orange-800 leading-tight">
+              Get <span className="text-red-600">50% OFF</span> Your First
+              Recharge
+            </h2>
+
+            {/* Sub text */}
+            <p className="text-sm text-orange-700 mt-2">
+              Fast VTU services for airtime, data & bills — anytime, anywhere.
+            </p>
+
+            {/* CTA Button */}
+            <button className="mt-4 bg-orange-600 hover:bg-orange-700 text-white font-semibold px-5 py-2 rounded-full shadow-lg transition active:scale-95">
+              Recharge Now
+            </button>
+
+            {/* Footer note */}
+            <p className="text-[11px] text-orange-600 mt-3 opacity-80">
+              ⏳ Offer ends soon — don’t miss out!
+            </p>
+          </div>
         </div>
       </div>
     </div>
