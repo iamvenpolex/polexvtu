@@ -11,47 +11,54 @@ import {
   XCircle,
   Loader2,
   Smartphone,
+  Clock3,
 } from "lucide-react";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
 interface AirtimeApiResponse {
-  Status?: string;
-  Message?: string;
-  TransactionID?: string;
+  status?: string;
+  message?: string;
+  response?: string;
+  network?: string;
+  amount?: string;
+  airtime_type?: string;
+  old_wallet?: number;
+  new_wallet?: number;
+  ["request-id"]?: string;
   [key: string]: unknown;
 }
 
 interface AirtimeResponse {
   success?: boolean;
-  status?: string;
-  requestID?: string;
-  apiResponse?: AirtimeApiResponse;
-  balanceAfter?: number;
+  message?: string;
+  reference?: string;
+  transaction_status?: string;
+  api_response?: AirtimeApiResponse;
   error?: string;
 }
 
 const NETWORKS = [
   {
-    id: "01",
+    id: "1",
     name: "MTN",
     logo: "/mtn-mobile-logo-icon.png",
     color: "bg-yellow-100 border-yellow-300",
   },
   {
-    id: "02",
+    id: "3",
     name: "GLO",
     logo: "/glo-logo.png",
     color: "bg-green-100 border-green-300",
   },
   {
-    id: "04",
+    id: "2",
     name: "Airtel",
     logo: "/Airtel_logo-01.png",
     color: "bg-red-100 border-red-300",
   },
   {
-    id: "03",
+    id: "4",
     name: "9mobile",
     logo: "/9mobile-logo.png",
     color: "bg-emerald-100 border-emerald-300",
@@ -59,12 +66,16 @@ const NETWORKS = [
 ];
 
 export default function AirtimePage() {
-  const [network, setNetwork] = useState("01");
+  const [network, setNetwork] = useState("1");
+
   const [amount, setAmount] = useState("");
+
   const [phone, setPhone] = useState("");
+
   const [loading, setLoading] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(false);
+
   const [modalData, setModalData] = useState<AirtimeResponse | null>(null);
 
   const showModal = (data: AirtimeResponse) => {
@@ -74,11 +85,13 @@ export default function AirtimePage() {
 
   const handlePhoneChange = (value: string) => {
     const cleaned = value.replace(/\D/g, "").slice(0, 11);
+
     setPhone(cleaned);
   };
 
   const handleAmountChange = (value: string) => {
     const cleaned = value.replace(/\D/g, "");
+
     setAmount(cleaned);
   };
 
@@ -124,10 +137,13 @@ export default function AirtimePage() {
 
       const res = await fetch(`${BASE_URL}/api/airtime/buy`, {
         method: "POST",
+
         headers: {
           "Content-Type": "application/json",
+
           Authorization: `Bearer ${token}`,
         },
+
         body: JSON.stringify({
           network,
           amount,
@@ -141,7 +157,8 @@ export default function AirtimePage() {
         return showModal({
           error:
             data.error ||
-            data.apiResponse?.Message ||
+            data.message ||
+            data.api_response?.message ||
             "Airtime purchase failed",
         });
       }
@@ -158,6 +175,8 @@ export default function AirtimePage() {
       setLoading(false);
     }
   };
+
+  const isPending = modalData?.transaction_status === "pending";
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-50 via-white to-gray-50">
@@ -176,6 +195,7 @@ export default function AirtimePage() {
               <PhoneCall size={18} className="text-orange-500" />
               Buy Airtime
             </h1>
+
             <p className="text-xs text-gray-500">
               Fast and secure airtime recharge
             </p>
@@ -185,13 +205,14 @@ export default function AirtimePage() {
 
       {/* CONTENT */}
       <div className="mx-auto max-w-3xl p-4">
-        {/* HERO CARD */}
+        {/* HERO */}
         <div className="mb-5 overflow-hidden rounded-3xl bg-gradient-to-r from-orange-500 to-orange-600 p-5 text-white shadow-lg">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-orange-100">
                 Recharge your line instantly
               </p>
+
               <h2 className="mt-1 text-2xl font-bold">Airtime Purchase</h2>
             </div>
 
@@ -206,7 +227,7 @@ export default function AirtimePage() {
           onSubmit={buyAirtime}
           className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm"
         >
-          {/* NETWORKS */}
+          {/* NETWORK */}
           <div>
             <div className="mb-3 flex items-center justify-between">
               <label className="text-sm font-semibold text-gray-800">
@@ -245,9 +266,7 @@ export default function AirtimePage() {
 
                     <div className="flex flex-col items-center justify-center gap-2">
                       <div
-                        className={`flex h-14 w-14 items-center justify-center rounded-full border bg-white ${
-                          item.color
-                        }`}
+                        className={`flex h-14 w-14 items-center justify-center rounded-full border bg-white ${item.color}`}
                       >
                         <Image
                           src={item.logo}
@@ -328,6 +347,7 @@ export default function AirtimePage() {
 
             <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
               <span>Minimum: ₦50</span>
+
               <span>Maximum: ₦50,000</span>
             </div>
           </div>
@@ -336,6 +356,7 @@ export default function AirtimePage() {
           <div className="mt-6 rounded-2xl border border-orange-100 bg-orange-50 p-4">
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-600">Network</span>
+
               <span className="font-semibold text-gray-900">
                 {selectedNetwork?.name}
               </span>
@@ -343,6 +364,7 @@ export default function AirtimePage() {
 
             <div className="mt-3 flex items-center justify-between text-sm">
               <span className="text-gray-600">Phone Number</span>
+
               <span className="font-semibold text-gray-900">
                 {phone || "--------"}
               </span>
@@ -350,6 +372,7 @@ export default function AirtimePage() {
 
             <div className="mt-3 flex items-center justify-between text-sm">
               <span className="text-gray-600">Amount</span>
+
               <span className="text-lg font-bold text-orange-600">
                 ₦{amount || "0"}
               </span>
@@ -392,6 +415,10 @@ export default function AirtimePage() {
                 <div className="rounded-full bg-red-100 p-4">
                   <XCircle size={42} className="text-red-500" />
                 </div>
+              ) : isPending ? (
+                <div className="rounded-full bg-yellow-100 p-4">
+                  <Clock3 size={42} className="text-yellow-600" />
+                </div>
               ) : (
                 <div className="rounded-full bg-green-100 p-4">
                   <CheckCircle2 size={42} className="text-green-600" />
@@ -400,54 +427,98 @@ export default function AirtimePage() {
             </div>
 
             <h2 className="mt-4 text-center text-2xl font-bold text-gray-900">
-              {modalData.error ? "Transaction Failed" : "Purchase Successful"}
+              {modalData.error
+                ? "Transaction Failed"
+                : isPending
+                  ? "Transaction Pending"
+                  : "Purchase Successful"}
             </h2>
 
             <p className="mt-2 text-center text-sm leading-6 text-gray-500">
               {modalData.error ||
-                modalData.apiResponse?.Message ||
+                modalData.message ||
+                modalData.api_response?.message ||
                 "Your airtime purchase was processed successfully"}
             </p>
 
             {!modalData.error && (
               <div className="mt-6 space-y-3 rounded-2xl bg-gray-50 p-4">
-                {modalData.requestID && (
+                {modalData.reference && (
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">Request ID</span>
+                    <span className="text-sm text-gray-500">Reference</span>
+
                     <span className="text-sm font-semibold text-gray-900">
-                      {modalData.requestID}
+                      {modalData.reference}
                     </span>
                   </div>
                 )}
 
-                {modalData.status && (
+                {modalData.transaction_status && (
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-500">Status</span>
-                    <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">
-                      {modalData.status}
+
+                    <span
+                      className={`rounded-full px-2 py-1 text-xs font-semibold ${
+                        modalData.transaction_status === "success"
+                          ? "bg-green-100 text-green-700"
+                          : modalData.transaction_status === "pending"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-red-100 text-red-700"
+                      }`}
+                    >
+                      {modalData.transaction_status}
                     </span>
                   </div>
                 )}
 
-                {modalData.apiResponse?.TransactionID && (
+                {modalData.api_response?.["request-id"] && (
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">
-                      Transaction ID
-                    </span>
+                    <span className="text-sm text-gray-500">Provider ID</span>
+
                     <span className="text-sm font-semibold text-gray-900">
-                      {modalData.apiResponse.TransactionID}
+                      {modalData.api_response?.["request-id"]}
                     </span>
                   </div>
                 )}
 
-                {modalData.balanceAfter !== undefined && (
+                {modalData.api_response?.network && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500">Network</span>
+
+                    <span className="text-sm font-semibold text-gray-900">
+                      {modalData.api_response?.network}
+                    </span>
+                  </div>
+                )}
+
+                {modalData.api_response?.amount && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500">Amount</span>
+
+                    <span className="text-sm font-semibold text-gray-900">
+                      ₦{Number(modalData.api_response?.amount).toLocaleString()}
+                    </span>
+                  </div>
+                )}
+
+                {modalData.api_response?.new_wallet !== undefined && (
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-500">
                       Wallet Balance
                     </span>
+
                     <span className="text-base font-bold text-orange-600">
-                      ₦{modalData.balanceAfter}
+                      ₦
+                      {Number(
+                        modalData.api_response?.new_wallet,
+                      ).toLocaleString()}
                     </span>
+                  </div>
+                )}
+
+                {modalData.api_response?.response && (
+                  <div className="rounded-xl bg-white p-3 text-sm text-gray-700">
+                    {modalData.api_response?.response}
                   </div>
                 )}
               </div>
@@ -470,6 +541,7 @@ export default function AirtimePage() {
             transform: translateY(100%);
             opacity: 0;
           }
+
           to {
             transform: translateY(0);
             opacity: 1;
