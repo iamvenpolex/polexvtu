@@ -114,7 +114,7 @@ export default function AirtimePage() {
 
     if (Number(amount) < 50) {
       return showModal({
-        error: "Minimum airtime amount is ₦50",
+        error: "Minimum airtime amount is ₦100",
       });
     }
 
@@ -346,7 +346,7 @@ export default function AirtimePage() {
             </div>
 
             <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
-              <span>Minimum: ₦50</span>
+              <span>Minimum: ₦100</span>
 
               <span>Maximum: ₦50,000</span>
             </div>

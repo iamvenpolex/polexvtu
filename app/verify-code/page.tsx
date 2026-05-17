@@ -147,7 +147,9 @@ export default function VerifyCodePage() {
                 ref={(el) => {
                   inputsRef.current[index] = el;
                 }}
-                type="text"
+                type="tel"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 maxLength={1}
                 value={digit}
                 disabled={loading}

@@ -17,12 +17,12 @@ export default function PageLoader({
 
     setLoading(true);
 
-    const timeout = setTimeout(() => setLoading(false), 700);
+    // Minimum 300ms so the loader doesn't just flash
+    const min = setTimeout(() => setLoading(false), 300);
 
-    return () => clearTimeout(timeout);
+    return () => clearTimeout(min);
   }, [pathname]);
 
-  // Only render children after loading finishes
   if (loading) return <Loader />;
 
   return <>{children}</>;

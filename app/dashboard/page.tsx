@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import NotificationPopup from "./components/NotificationPopup";
 import InfoTicker from "@/components/InfoTicker";
 import Navbar from "./components/Navbar";
@@ -45,10 +46,37 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
   "https://polexvtu-backend.onrender.com";
 
+// ------------------------
+// Auth guard helpers
+// ------------------------
+function getToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("token");
+}
+
+function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    // exp is in seconds; Date.now() is in ms
+    return payload.exp * 1000 < Date.now();
+  } catch {
+    // malformed token
+    return true;
+  }
+}
+
+function clearSession() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("firstName");
+}
+
 export default function DashboardPage() {
+  const router = useRouter();
+
   // ------------------------
   // States
   // ------------------------
+  const [authChecked, setAuthChecked] = useState(false);
   const [showBalance, setShowBalance] = useState(true);
   const [showReward, setShowReward] = useState(true);
   const [user, setUser] = useState<User | null>(null);
@@ -57,46 +85,103 @@ export default function DashboardPage() {
   const [firstName, setFirstName] = useState("User");
 
   // ------------------------
-  // Fetch user data
+  // Redirect helper
+  // ------------------------
+  const redirectToLogin = useCallback(
+    (reason?: string) => {
+      clearSession();
+      if (reason) console.warn("[Auth]", reason);
+      router.replace("/login");
+    },
+    [router],
+  );
+
+  // ------------------------
+  // 1. Auth guard — runs before anything else
   // ------------------------
   useEffect(() => {
-    const storedName = localStorage.getItem("firstName") || "User";
-    setFirstName(storedName);
+    const token = getToken();
 
-    const fetchUserData = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) throw new Error("User not logged in");
+    if (!token) {
+      redirectToLogin("No token found");
+      return;
+    }
 
-        const response = await axios.get<User>(
-          `${API_BASE_URL}/api/user/profile`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
+    if (isTokenExpired(token)) {
+      redirectToLogin("Token expired");
+      return;
+    }
 
-        setUser(response.data);
-      } catch (err: unknown) {
-        console.error("❌ Error fetching data:", err);
+    // Token looks valid — allow render
+    setFirstName(localStorage.getItem("firstName") || "User");
+    setAuthChecked(true);
+  }, [redirectToLogin]);
 
-        if (axios.isAxiosError(err)) {
-          const axiosErr = err as AxiosError<ApiError>;
-          setError(axiosErr.response?.data?.message || "Failed to fetch data");
-        } else if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("Something went wrong");
+  // ------------------------
+  // 2. Fetch user data (only after auth passes)
+  // ------------------------
+  const fetchUserData = useCallback(async () => {
+    const token = getToken();
+
+    // Re-check token on every fetch (handles mid-session expiry)
+    if (!token || isTokenExpired(token)) {
+      redirectToLogin("Session expired during fetch");
+      return;
+    }
+
+    try {
+      const response = await axios.get<User>(
+        `${API_BASE_URL}/api/user/profile`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      setUser(response.data);
+      setError("");
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        const axiosErr = err as AxiosError<ApiError>;
+        const status = axiosErr.response?.status;
+
+        // 401 / 403 → token rejected by server → force logout
+        if (status === 401 || status === 403) {
+          redirectToLogin("Server rejected token");
+          return;
         }
-      } finally {
-        setLoading(false);
+
+        setError(axiosErr.response?.data?.message || "Failed to fetch data");
+      } else if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Something went wrong");
       }
-    };
+    } finally {
+      setLoading(false);
+    }
+  }, [redirectToLogin]);
+
+  useEffect(() => {
+    if (!authChecked) return;
 
     fetchUserData();
 
-    const interval = setInterval(fetchUserData, 45000); // auto-refresh
+    // Auto-refresh every 45s — also re-validates token each time
+    const interval = setInterval(fetchUserData, 45000);
     return () => clearInterval(interval);
-  }, []);
+  }, [authChecked, fetchUserData]);
+
+  // ------------------------
+  // 3. Block render until auth is confirmed
+  //    Shows nothing (no flash of content) while redirecting
+  // ------------------------
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-gray-500">Verifying session…</p>
+        </div>
+      </div>
+    );
+  }
 
   // ------------------------
   // Render
@@ -107,6 +192,7 @@ export default function DashboardPage() {
       <Navbar />
       <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
         <InfoTicker message="🔥 Special VTU Offer: Get 50% OFF on your first recharge! Limited time only! 🔥" />
+
         {/* ---------------- Wallet Dashboard ---------------- */}
         <div className="bg-white rounded-xl shadow-md p-3 sm:p-6 relative">
           <div className="flex items-center justify-between">
@@ -114,7 +200,6 @@ export default function DashboardPage() {
               Hi, {firstName} 👋
             </h1>
 
-            {/* ---------------- Transaction History CTA at top-right ---------------- */}
             {user && !loading && (
               <Link
                 href="/dashboard/transactionhistory"
@@ -198,7 +283,6 @@ export default function DashboardPage() {
             Withdraw / Reward
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-            {/* Transfer / Withdraw Button */}
             <Link
               href="/dashboard/wallet/withdraw/wallet-tapam"
               className="flex flex-col items-center justify-center gap-1 sm:gap-2 bg-gray-700 hover:bg-gray-800 text-white font-medium py-2 sm:py-4 rounded-lg shadow text-xs sm:text-sm"
@@ -207,7 +291,6 @@ export default function DashboardPage() {
               Transfer
             </Link>
 
-            {/* Reward to Wallet Button */}
             <Link
               href="/dashboard/wallet/withdraw/reward-wallet"
               className="flex flex-col items-center justify-center gap-1 sm:gap-2 bg-green-500 hover:bg-green-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow text-xs sm:text-sm"
@@ -216,7 +299,6 @@ export default function DashboardPage() {
               Reward to Wallet
             </Link>
 
-            {/* View History Button - left on small, center on larger screens */}
             <Link
               href="/dashboard/tapamhistory"
               className="flex items-center justify-center gap-1 sm:gap-2 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow text-xs sm:text-sm col-span-2 sm:col-span-1 sm:justify-center"
@@ -281,11 +363,8 @@ export default function DashboardPage() {
 
         {/* ADS BANNER */}
         <div className="relative overflow-hidden rounded-2xl border border-orange-200 bg-gradient-to-br from-yellow-50 via-orange-100 to-yellow-100 shadow-xl my-6">
-          {/* Glow effects */}
           <div className="absolute -top-10 -left-10 h-32 w-32 bg-orange-300/30 blur-3xl rounded-full" />
           <div className="absolute -bottom-10 -right-10 h-32 w-32 bg-yellow-300/30 blur-3xl rounded-full" />
-
-          {/* Floating icons */}
           <div className="absolute top-3 left-4 text-2xl animate-bounce">
             🔥
           </div>
@@ -294,30 +373,21 @@ export default function DashboardPage() {
           </div>
 
           <div className="relative z-10 px-6 py-6 text-center">
-            {/* Badge */}
             <div className="inline-flex items-center gap-2 bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md mb-3">
               LIMITED OFFER
             </div>
-
-            {/* Main headline */}
             <h2 className="text-xl md:text-2xl font-extrabold text-orange-800 leading-tight">
               Get <span className="text-red-600">50% OFF</span> Your First
               Recharge
             </h2>
-
-            {/* Sub text */}
             <p className="text-sm text-orange-700 mt-2">
               Fast VTU services for airtime, data & bills — anytime, anywhere.
             </p>
-
-            {/* CTA Button */}
             <button className="mt-4 bg-orange-600 hover:bg-orange-700 text-white font-semibold px-5 py-2 rounded-full shadow-lg transition active:scale-95">
               Recharge Now
             </button>
-
-            {/* Footer note */}
             <p className="text-[11px] text-orange-600 mt-3 opacity-80">
-              ⏳ Offer ends soon — don’t miss out!
+              ⏳ Offer ends soon — don&#39;t miss out!
             </p>
           </div>
         </div>
