@@ -1,557 +1,663 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowLeft,
-  PhoneCall,
-  Wallet,
+  Phone,
   CheckCircle2,
   XCircle,
   Loader2,
-  Smartphone,
-  Clock3,
+  Clock,
 } from "lucide-react";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
-interface AirtimeApiResponse {
-  status?: string;
-  message?: string;
-  response?: string;
-  network?: string;
-  amount?: string;
-  airtime_type?: string;
-  old_wallet?: number;
-  new_wallet?: number;
-  ["request-id"]?: string;
-  [key: string]: unknown;
-}
+type ReceiptStatus = "success" | "failed" | "pending";
 
-interface AirtimeResponse {
-  success?: boolean;
-  message?: string;
-  reference?: string;
-  transaction_status?: string;
-  api_response?: AirtimeApiResponse;
-  error?: string;
-}
+type Receipt = {
+  status: ReceiptStatus;
+  phone: string;
+  network: string;
+  amount: number;
+  cashback: number;
+  reference: string;
+  timestamp: string;
+  message: string;
+};
+
+type MessageType = { type: "success" | "error"; text: string } | null;
 
 const NETWORKS = [
-  {
-    id: "1",
-    name: "MTN",
-    logo: "/mtn-mobile-logo-icon.png",
-    color: "bg-yellow-100 border-yellow-300",
-  },
-  {
-    id: "3",
-    name: "GLO",
-    logo: "/glo-logo.png",
-    color: "bg-green-100 border-green-300",
-  },
-  {
-    id: "2",
-    name: "Airtel",
-    logo: "/Airtel_logo-01.png",
-    color: "bg-red-100 border-red-300",
-  },
-  {
-    id: "4",
-    name: "9mobile",
-    logo: "/9mobile-logo.png",
-    color: "bg-emerald-100 border-emerald-300",
-  },
+  { id: "1", key: "mtn", name: "MTN", logo: "/mtn-mobile-logo-icon.png" },
+  { id: "3", key: "glo", name: "GLO", logo: "/glo-logo.png" },
+  { id: "2", key: "airtel", name: "Airtel", logo: "/Airtel_logo-01.png" },
+  { id: "4", key: "9mobile", name: "9mobile", logo: "/9mobile-logo.png" },
 ];
+
+const QUICK_AMOUNTS = [100, 200, 500, 1000, 2000, 5000];
 
 export default function AirtimePage() {
   const [network, setNetwork] = useState("1");
-
   const [amount, setAmount] = useState("");
-
   const [phone, setPhone] = useState("");
-
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<MessageType>(null);
+  const [receipt, setReceipt] = useState<Receipt | null>(null);
+  const [showReview, setShowReview] = useState(false);
+  const [balance, setBalance] = useState(0);
+  const [beneficiaries, setBeneficiaries] = useState<string[]>([]);
+  const [loadingBeneficiaries, setLoadingBeneficiaries] = useState(false);
 
-  const [modalOpen, setModalOpen] = useState(false);
-
-  const [modalData, setModalData] = useState<AirtimeResponse | null>(null);
-
-  const showModal = (data: AirtimeResponse) => {
-    setModalData(data);
-    setModalOpen(true);
-  };
-
-  const handlePhoneChange = (value: string) => {
-    const cleaned = value.replace(/\D/g, "").slice(0, 11);
-
-    setPhone(cleaned);
-  };
-
-  const handleAmountChange = (value: string) => {
-    const cleaned = value.replace(/\D/g, "");
-
-    setAmount(cleaned);
-  };
-
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
   const selectedNetwork = NETWORKS.find((n) => n.id === network);
+  const numericAmount = Number(amount) || 0;
+  const cashbackPreview = Math.floor(numericAmount * 0.01);
 
-  const buyAirtime = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // ---------- AUTO REMOVE MESSAGE ----------
+  useEffect(() => {
+    if (!message) return;
+    const t = setTimeout(() => setMessage(null), 3000);
+    return () => clearTimeout(t);
+  }, [message]);
 
-    if (!network || !amount || !phone) {
-      return showModal({
-        error: "Please fill in all required fields",
+  // ---------- FETCH BALANCE ----------
+  useEffect(() => {
+    if (!token) return;
+    const run = async () => {
+      try {
+        const res = await fetch(`${BASE_URL}/api/wallet/balance`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        setBalance(data.balance || 0);
+      } catch {
+        /* silent */
+      }
+    };
+    run();
+  }, [token]);
+
+  // ---------- FETCH BENEFICIARIES ----------
+  useEffect(() => {
+    if (!token) return;
+    setLoadingBeneficiaries(true);
+    const run = async () => {
+      try {
+        const res = await fetch(`${BASE_URL}/api/airtime/beneficiaries`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        setBeneficiaries(data.phones || []);
+      } catch {
+        setBeneficiaries([]);
+      } finally {
+        setLoadingBeneficiaries(false);
+      }
+    };
+    run();
+  }, [token]);
+
+  // ---------- VALIDATE & OPEN REVIEW ----------
+  const handleReview = () => {
+    if (!/^\d{11}$/.test(phone)) {
+      setMessage({
+        type: "error",
+        text: "Enter a valid 11-digit phone number",
       });
+      return;
     }
-
-    if (!/^0\d{10}$/.test(phone)) {
-      return showModal({
-        error: "Please enter a valid 11-digit phone number",
-      });
+    if (numericAmount < 50) {
+      setMessage({ type: "error", text: "Minimum airtime amount is ₦50" });
+      return;
     }
-
-    if (Number(amount) < 50) {
-      return showModal({
-        error: "Minimum airtime amount is ₦100",
-      });
+    if (numericAmount > 50000) {
+      setMessage({ type: "error", text: "Maximum airtime amount is ₦50,000" });
+      return;
     }
+    if (balance < numericAmount) {
+      setMessage({ type: "error", text: "Insufficient wallet balance" });
+      return;
+    }
+    setShowReview(true);
+  };
 
-    if (Number(amount) > 50000) {
-      return showModal({
-        error: "Maximum airtime amount is ₦50,000",
-      });
+  // ---------- BUY AIRTIME ----------
+  const confirmBuy = async () => {
+    if (!token) {
+      setMessage({ type: "error", text: "Please login again" });
+      return;
     }
 
     setLoading(true);
+    const reference = "AIRTIME_" + Date.now();
 
     try {
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        return showModal({
-          error: "Please login to continue",
-        });
-      }
-
       const res = await fetch(`${BASE_URL}/api/airtime/buy`, {
         method: "POST",
-
         headers: {
           "Content-Type": "application/json",
-
           Authorization: `Bearer ${token}`,
         },
+        body: JSON.stringify({ network, amount: numericAmount, phone }),
+      });
 
-        body: JSON.stringify({
-          network,
-          amount,
-          phone,
+      const data = await res.json();
+      const txStatus: ReceiptStatus =
+        data.status || (data.success ? "success" : "failed");
+
+      setReceipt({
+        status: txStatus,
+        phone,
+        network: selectedNetwork?.name || network,
+        amount: numericAmount,
+        cashback: data.cashback || 0,
+        reference: data.reference || reference,
+        timestamp: new Date().toLocaleString("en-NG", {
+          dateStyle: "medium",
+          timeStyle: "short",
         }),
+        message:
+          data.message ||
+          (txStatus === "success"
+            ? "Airtime purchase successful"
+            : "Transaction failed"),
       });
 
-      const data: AirtimeResponse = await res.json();
+      setShowReview(false);
 
-      if (!res.ok) {
-        return showModal({
-          error:
-            data.error ||
-            data.message ||
-            data.api_response?.message ||
-            "Airtime purchase failed",
-        });
+      if (txStatus === "success") {
+        // Refresh balance
+        try {
+          const wRes = await fetch(`${BASE_URL}/api/wallet/balance`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const wData = await wRes.json();
+          setBalance(wData.balance || 0);
+        } catch {
+          /* non-critical */
+        }
+
+        // Refresh beneficiaries
+        try {
+          const bRes = await fetch(`${BASE_URL}/api/airtime/beneficiaries`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const bData = await bRes.json();
+          setBeneficiaries(bData.phones || []);
+        } catch {
+          /* non-critical */
+        }
+
+        setPhone("");
+        setAmount("");
       }
-
-      showModal(data);
-
-      setAmount("");
-      setPhone("");
     } catch {
-      showModal({
-        error: "Network error — please try again",
+      setReceipt({
+        status: "failed",
+        phone,
+        network: selectedNetwork?.name || network,
+        amount: numericAmount,
+        cashback: 0,
+        reference,
+        timestamp: new Date().toLocaleString("en-NG", {
+          dateStyle: "medium",
+          timeStyle: "short",
+        }),
+        message: "Network error. Please try again.",
       });
+      setShowReview(false);
     } finally {
       setLoading(false);
     }
   };
 
-  const isPending = modalData?.transaction_status === "pending";
+  // ══════════════════════════════════════════
+  // RECEIPT PAGE
+  // ══════════════════════════════════════════
+  if (receipt) {
+    const isSuccess = receipt.status === "success";
+    const isPending = receipt.status === "pending";
+    const bandColor = isSuccess
+      ? "bg-orange-500"
+      : isPending
+        ? "bg-yellow-500"
+        : "bg-red-500";
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50 via-white to-gray-50">
-      {/* HEADER */}
-      <header className="sticky top-0 z-50 border-b border-orange-100 bg-white/90 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-4">
+    return (
+      <div className="min-h-screen bg-[#f0f4f8] flex flex-col">
+        <div
+          className={`flex flex-col items-center justify-center pt-16 pb-12 px-6 ${bandColor}`}
+        >
+          <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-white/20">
+            {isSuccess ? (
+              <CheckCircle2 size={44} className="text-white" />
+            ) : isPending ? (
+              <Clock size={44} className="text-white" />
+            ) : (
+              <XCircle size={44} className="text-white" />
+            )}
+          </div>
+          <p className="text-xs font-bold uppercase tracking-widest text-white/70">
+            {isSuccess
+              ? "Purchase Successful"
+              : isPending
+                ? "Processing"
+                : "Transaction Failed"}
+          </p>
+          <h1 className="mt-2 text-4xl font-extrabold text-white">
+            ₦{receipt.amount.toLocaleString()}
+          </h1>
+          {isSuccess && receipt.cashback > 0 && (
+            <div className="mt-2 rounded-full bg-white/20 px-4 py-1.5">
+              <p className="text-sm font-bold text-white">
+                +₦{receipt.cashback} cashback credited 🎉
+              </p>
+            </div>
+          )}
+          <p className="mt-2 max-w-xs text-center text-sm text-white/80 leading-relaxed">
+            {receipt.message}
+          </p>
+        </div>
+
+        {/* Receipt card */}
+        <div className="mx-4 -mt-5 rounded-3xl bg-white shadow-xl overflow-hidden">
+          <div className="flex h-4 overflow-hidden">
+            {Array.from({ length: 20 }).map((_, i) => (
+              <div
+                key={i}
+                className={`flex-1 ${bandColor}`}
+                style={{
+                  clipPath:
+                    i % 2 === 0
+                      ? "polygon(0 0, 100% 0, 50% 100%)"
+                      : "polygon(0 0, 100% 0, 100% 100%, 0 100%)",
+                }}
+              />
+            ))}
+          </div>
+
+          <div className="px-5 py-5 space-y-0">
+            {[
+              { label: "Network", value: receipt.network },
+              { label: "Phone Number", value: receipt.phone },
+              {
+                label: "Airtime Amount",
+                value: `₦${receipt.amount.toLocaleString()}`,
+                bold: true,
+              },
+              ...(receipt.cashback > 0
+                ? [
+                    {
+                      label: "1% Cashback",
+                      value: `+₦${receipt.cashback}`,
+                      green: true,
+                    },
+                  ]
+                : []),
+              { label: "Reference", value: receipt.reference, mono: true },
+              { label: "Date & Time", value: receipt.timestamp },
+              {
+                label: "Status",
+                value: isSuccess
+                  ? "Successful"
+                  : isPending
+                    ? "Processing"
+                    : "Failed",
+                colored: receipt.status,
+              },
+            ].map((row, i, arr) => (
+              <div key={i}>
+                <div className="flex items-center justify-between py-3.5">
+                  <span className="text-sm text-gray-400">{row.label}</span>
+                  <span
+                    className={`max-w-[58%] text-right text-sm leading-snug ${
+                      (row as any).mono
+                        ? "font-mono text-xs text-gray-500"
+                        : (row as any).bold
+                          ? "font-extrabold text-gray-900"
+                          : (row as any).green
+                            ? "font-bold text-green-600"
+                            : (row as any).colored
+                              ? (row as any).colored === "success"
+                                ? "font-bold text-green-600"
+                                : (row as any).colored === "pending"
+                                  ? "font-bold text-yellow-600"
+                                  : "font-bold text-red-500"
+                              : "font-semibold text-gray-800"
+                    }`}
+                  >
+                    {row.value}
+                  </span>
+                </div>
+                {i < arr.length - 1 && (
+                  <div className="border-b border-dashed border-gray-100" />
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="flex h-4 overflow-hidden">
+            {Array.from({ length: 20 }).map((_, i) => (
+              <div
+                key={i}
+                className="flex-1 bg-[#f0f4f8]"
+                style={{
+                  clipPath:
+                    i % 2 === 0
+                      ? "polygon(0 100%, 100% 100%, 50% 0)"
+                      : "polygon(0 0, 100% 0, 100% 100%, 0 100%)",
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="px-4 mt-6 pb-10 space-y-3">
+          <button
+            onClick={() => {
+              setReceipt(null);
+            }}
+            className={`w-full rounded-2xl py-4 font-bold text-white shadow-md ${bandColor}`}
+          >
+            Buy Again
+          </button>
           <Link
             href="/dashboard"
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 text-orange-600 transition hover:bg-orange-200"
+            className="block w-full rounded-2xl bg-white py-4 text-center font-semibold text-gray-700 shadow-sm border border-gray-100"
           >
-            <ArrowLeft size={18} />
+            Back to Home
           </Link>
+        </div>
+      </div>
+    );
+  }
 
-          <div>
-            <h1 className="flex items-center gap-2 text-lg font-bold text-gray-900">
-              <PhoneCall size={18} className="text-orange-500" />
-              Buy Airtime
-            </h1>
+  // ══════════════════════════════════════════
+  // MAIN PAGE
+  // ══════════════════════════════════════════
+  return (
+    <div className="min-h-screen bg-[#f8fafc] pb-32">
+      {/* TOAST */}
+      {message && (
+        <div
+          className={`fixed top-5 left-1/2 z-[200] -translate-x-1/2 rounded-2xl px-5 py-3 text-sm font-semibold shadow-xl backdrop-blur-md ${
+            message.type === "success"
+              ? "bg-green-500 text-white"
+              : "bg-red-500 text-white"
+          }`}
+        >
+          {message.text}
+        </div>
+      )}
 
-            <p className="text-xs text-gray-500">
-              Fast and secure airtime recharge
-            </p>
+      {/* HEADER */}
+      <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/90 backdrop-blur-lg">
+        <div className="flex items-center justify-between px-4 py-4">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/dashboard"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 text-orange-500"
+            >
+              <ArrowLeft size={18} />
+            </Link>
+            <div>
+              <h1 className="text-lg font-bold text-gray-900">Buy Airtime</h1>
+              <p className="text-xs text-gray-500">
+                1% cashback on every purchase
+              </p>
+            </div>
+          </div>
+          <div className="rounded-full bg-orange-50 px-4 py-2 text-sm font-bold text-orange-600">
+            ₦{balance.toLocaleString()}
           </div>
         </div>
       </header>
 
-      {/* CONTENT */}
-      <div className="mx-auto max-w-3xl p-4">
-        {/* HERO */}
-        <div className="mb-5 overflow-hidden rounded-3xl bg-gradient-to-r from-orange-500 to-orange-600 p-5 text-white shadow-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-orange-100">
-                Recharge your line instantly
-              </p>
-
-              <h2 className="mt-1 text-2xl font-bold">Airtime Purchase</h2>
-            </div>
-
-            <div className="rounded-2xl bg-white/20 p-4 backdrop-blur-sm">
-              <Smartphone size={34} />
-            </div>
-          </div>
-        </div>
-
-        {/* FORM */}
-        <form
-          onSubmit={buyAirtime}
-          className="rounded-3xl border border-gray-100 bg-white p-5 shadow-sm"
-        >
-          {/* NETWORK */}
-          <div>
-            <div className="mb-3 flex items-center justify-between">
-              <label className="text-sm font-semibold text-gray-800">
-                Select Network
-              </label>
-
-              {selectedNetwork && (
-                <span className="text-xs font-medium text-orange-600">
-                  {selectedNetwork.name} Selected
+      {/* NETWORK SELECTOR */}
+      <div className="px-4 pt-4">
+        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+          {NETWORKS.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setNetwork(item.id)}
+              className={`min-w-[80px] rounded-2xl border-2 p-3 transition-all ${
+                network === item.id
+                  ? "border-orange-500 bg-orange-50"
+                  : "border-gray-200 bg-white"
+              }`}
+            >
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-white shadow-sm border border-gray-100">
+                  <Image
+                    src={item.logo}
+                    alt={item.name}
+                    width={36}
+                    height={36}
+                    className="object-contain"
+                  />
+                </div>
+                <span
+                  className={`text-[11px] font-bold ${network === item.id ? "text-orange-600" : "text-gray-600"}`}
+                >
+                  {item.name}
                 </span>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {NETWORKS.map((item) => {
-                const active = network === item.id;
-
-                return (
-                  <button
-                    type="button"
-                    key={item.id}
-                    onClick={() => setNetwork(item.id)}
-                    className={`relative overflow-hidden rounded-2xl border-2 p-3 transition-all duration-200 ${
-                      active
-                        ? "border-orange-500 bg-orange-50 shadow-md shadow-orange-100"
-                        : "border-gray-200 bg-white hover:border-orange-200 hover:bg-orange-50/40"
-                    }`}
-                  >
-                    {active && (
-                      <div className="absolute right-2 top-2">
-                        <div className="rounded-full bg-orange-500 p-1 text-white">
-                          <CheckCircle2 size={12} />
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <div
-                        className={`flex h-14 w-14 items-center justify-center rounded-full border bg-white ${item.color}`}
-                      >
-                        <Image
-                          src={item.logo}
-                          alt={item.name}
-                          width={34}
-                          height={34}
-                          className="object-contain"
-                        />
-                      </div>
-
-                      <span
-                        className={`text-sm font-semibold ${
-                          active ? "text-orange-700" : "text-gray-700"
-                        }`}
-                      >
-                        {item.name}
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* PHONE */}
-          <div className="mt-6">
-            <label className="mb-2 block text-sm font-semibold text-gray-800">
-              Phone Number
-            </label>
-
-            <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4 transition focus-within:border-orange-400 focus-within:bg-white focus-within:ring-4 focus-within:ring-orange-100">
-              <PhoneCall size={20} className="text-orange-500" />
-
-              <input
-                type="tel"
-                inputMode="numeric"
-                maxLength={11}
-                placeholder="08012345678"
-                value={phone}
-                onChange={(e) => handlePhoneChange(e.target.value)}
-                className="w-full bg-transparent text-base font-medium text-gray-900 outline-none placeholder:text-gray-400"
-              />
-            </div>
-
-            <div className="mt-2 flex items-center justify-between">
-              <p className="text-xs text-gray-500">
-                Enter a valid 11-digit phone number
-              </p>
-
-              <p
-                className={`text-xs font-medium ${
-                  phone.length === 11 ? "text-green-600" : "text-gray-400"
-                }`}
-              >
-                {phone.length}/11
-              </p>
-            </div>
-          </div>
-
-          {/* AMOUNT */}
-          <div className="mt-5">
-            <label className="mb-2 block text-sm font-semibold text-gray-800">
-              Airtime Amount
-            </label>
-
-            <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4 transition focus-within:border-orange-400 focus-within:bg-white focus-within:ring-4 focus-within:ring-orange-100">
-              <Wallet size={20} className="text-orange-500" />
-
-              <input
-                type="tel"
-                inputMode="numeric"
-                placeholder="100"
-                value={amount}
-                onChange={(e) => handleAmountChange(e.target.value)}
-                className="w-full bg-transparent text-base font-medium text-gray-900 outline-none placeholder:text-gray-400"
-              />
-            </div>
-
-            <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
-              <span>Minimum: ₦100</span>
-
-              <span>Maximum: ₦50,000</span>
-            </div>
-          </div>
-
-          {/* SUMMARY */}
-          <div className="mt-6 rounded-2xl border border-orange-100 bg-orange-50 p-4">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">Network</span>
-
-              <span className="font-semibold text-gray-900">
-                {selectedNetwork?.name}
-              </span>
-            </div>
-
-            <div className="mt-3 flex items-center justify-between text-sm">
-              <span className="text-gray-600">Phone Number</span>
-
-              <span className="font-semibold text-gray-900">
-                {phone || "--------"}
-              </span>
-            </div>
-
-            <div className="mt-3 flex items-center justify-between text-sm">
-              <span className="text-gray-600">Amount</span>
-
-              <span className="text-lg font-bold text-orange-600">
-                ₦{amount || "0"}
-              </span>
-            </div>
-          </div>
-
-          {/* BUTTON */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 py-4 text-base font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {loading ? (
-              <>
-                <Loader2 size={18} className="animate-spin" />
-                Processing Purchase...
-              </>
-            ) : (
-              <>
-                <Wallet size={18} />
-                Buy Airtime
-              </>
-            )}
-          </button>
-        </form>
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* MODAL */}
-      {modalOpen && modalData && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm"
-          onClick={() => setModalOpen(false)}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="animate-slideUp w-full max-w-md rounded-t-[30px] bg-white p-6"
-          >
-            <div className="flex justify-center">
-              {modalData.error ? (
-                <div className="rounded-full bg-red-100 p-4">
-                  <XCircle size={42} className="text-red-500" />
-                </div>
-              ) : isPending ? (
-                <div className="rounded-full bg-yellow-100 p-4">
-                  <Clock3 size={42} className="text-yellow-600" />
-                </div>
-              ) : (
-                <div className="rounded-full bg-green-100 p-4">
-                  <CheckCircle2 size={42} className="text-green-600" />
-                </div>
-              )}
+      {/* PHONE INPUT */}
+      <div className="px-4 pt-4">
+        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="rounded-full bg-orange-100 p-2 text-orange-500">
+              <Phone size={16} />
             </div>
-
-            <h2 className="mt-4 text-center text-2xl font-bold text-gray-900">
-              {modalData.error
-                ? "Transaction Failed"
-                : isPending
-                  ? "Transaction Pending"
-                  : "Purchase Successful"}
-            </h2>
-
-            <p className="mt-2 text-center text-sm leading-6 text-gray-500">
-              {modalData.error ||
-                modalData.message ||
-                modalData.api_response?.message ||
-                "Your airtime purchase was processed successfully"}
-            </p>
-
-            {!modalData.error && (
-              <div className="mt-6 space-y-3 rounded-2xl bg-gray-50 p-4">
-                {modalData.reference && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">Reference</span>
-
-                    <span className="text-sm font-semibold text-gray-900">
-                      {modalData.reference}
-                    </span>
-                  </div>
-                )}
-
-                {modalData.transaction_status && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">Status</span>
-
-                    <span
-                      className={`rounded-full px-2 py-1 text-xs font-semibold ${
-                        modalData.transaction_status === "success"
-                          ? "bg-green-100 text-green-700"
-                          : modalData.transaction_status === "pending"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {modalData.transaction_status}
-                    </span>
-                  </div>
-                )}
-
-                {modalData.api_response?.["request-id"] && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">Provider ID</span>
-
-                    <span className="text-sm font-semibold text-gray-900">
-                      {modalData.api_response?.["request-id"]}
-                    </span>
-                  </div>
-                )}
-
-                {modalData.api_response?.network && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">Network</span>
-
-                    <span className="text-sm font-semibold text-gray-900">
-                      {modalData.api_response?.network}
-                    </span>
-                  </div>
-                )}
-
-                {modalData.api_response?.amount && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">Amount</span>
-
-                    <span className="text-sm font-semibold text-gray-900">
-                      ₦{Number(modalData.api_response?.amount).toLocaleString()}
-                    </span>
-                  </div>
-                )}
-
-                {modalData.api_response?.new_wallet !== undefined && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">
-                      Wallet Balance
-                    </span>
-
-                    <span className="text-base font-bold text-orange-600">
-                      ₦
-                      {Number(
-                        modalData.api_response?.new_wallet,
-                      ).toLocaleString()}
-                    </span>
-                  </div>
-                )}
-
-                {modalData.api_response?.response && (
-                  <div className="rounded-xl bg-white p-3 text-sm text-gray-700">
-                    {modalData.api_response?.response}
-                  </div>
-                )}
-              </div>
+            <input
+              type="tel"
+              inputMode="numeric"
+              maxLength={11}
+              placeholder="Enter phone number"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+              className="w-full bg-transparent text-base font-medium text-gray-900 outline-none placeholder:text-gray-400"
+            />
+            {phone.length > 0 && (
+              <span
+                className={`text-xs font-semibold ${phone.length === 11 ? "text-green-500" : "text-gray-400"}`}
+              >
+                {phone.length}/11
+              </span>
             )}
+          </div>
+        </div>
+      </div>
 
-            <button
-              onClick={() => setModalOpen(false)}
-              className="mt-6 w-full rounded-2xl bg-orange-500 py-4 font-semibold text-white transition hover:bg-orange-600"
-            >
-              Close
-            </button>
+      {/* BENEFICIARIES */}
+      {(loadingBeneficiaries || beneficiaries.length > 0) && (
+        <div className="px-4 pt-3">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+            Previous Numbers
+          </p>
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+            {loadingBeneficiaries
+              ? Array.from({ length: 3 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-8 w-28 animate-pulse rounded-full bg-gray-200"
+                  />
+                ))
+              : beneficiaries.map((item, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setPhone(item)}
+                    className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-medium shadow-sm transition-all ${
+                      phone === item
+                        ? "border-orange-400 bg-orange-50 text-orange-600"
+                        : "border-gray-200 bg-white text-gray-700"
+                    }`}
+                  >
+                    {item}
+                  </button>
+                ))}
           </div>
         </div>
       )}
 
-      {/* ANIMATION */}
-      <style jsx>{`
-        @keyframes slideUp {
-          from {
-            transform: translateY(100%);
-            opacity: 0;
-          }
+      {/* AMOUNT — quick chips + custom input */}
+      <div className="px-4 pt-4">
+        <p className="mb-2.5 text-xs font-semibold uppercase tracking-wide text-gray-400">
+          Select Amount
+        </p>
+        <div className="grid grid-cols-3 gap-2 mb-3">
+          {QUICK_AMOUNTS.map((q) => (
+            <button
+              key={q}
+              onClick={() => setAmount(String(q))}
+              className={`rounded-2xl border py-3 text-sm font-bold transition-all ${
+                amount === String(q)
+                  ? "border-orange-500 bg-orange-50 text-orange-600"
+                  : "border-gray-200 bg-white text-gray-700"
+              }`}
+            >
+              ₦{q.toLocaleString()}
+            </button>
+          ))}
+        </div>
 
-          to {
-            transform: translateY(0);
-            opacity: 1;
-          }
-        }
+        {/* Custom amount input */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="text-base font-bold text-gray-400">₦</span>
+            <input
+              type="tel"
+              inputMode="numeric"
+              placeholder="Enter custom amount"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value.replace(/\D/g, ""))}
+              className="w-full bg-transparent text-base font-medium text-gray-900 outline-none placeholder:text-gray-400"
+            />
+          </div>
+        </div>
 
-        .animate-slideUp {
-          animation: slideUp 0.3s ease-out;
-        }
-      `}</style>
+        <div className="mt-1.5 flex justify-between text-xs text-gray-400 px-1">
+          <span>Min: ₦50</span>
+          <span>Max: ₦50,000</span>
+        </div>
+      </div>
+
+      {/* SUMMARY CARD */}
+      {numericAmount >= 50 && phone.length === 11 && (
+        <div className="mx-4 mt-4 rounded-2xl border border-orange-100 bg-orange-50 px-4 py-3">
+          <div className="flex justify-between text-sm mb-2">
+            <span className="text-gray-500">Network</span>
+            <span className="font-semibold text-gray-800">
+              {selectedNetwork?.name}
+            </span>
+          </div>
+          <div className="flex justify-between text-sm mb-2">
+            <span className="text-gray-500">Phone</span>
+            <span className="font-semibold text-gray-800">{phone}</span>
+          </div>
+          <div className="flex justify-between text-sm mb-2">
+            <span className="text-gray-500">Amount</span>
+            <span className="font-bold text-gray-900">
+              ₦{numericAmount.toLocaleString()}
+            </span>
+          </div>
+          <div className="border-t border-orange-200 pt-2 flex justify-between text-sm">
+            <span className="text-green-600 font-semibold">1% Cashback</span>
+            <span className="font-bold text-green-600">
+              +₦{cashbackPreview}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* BUY BUTTON */}
+      <div className="px-4 mt-4">
+        <button
+          onClick={handleReview}
+          disabled={loading}
+          className="w-full rounded-2xl bg-orange-500 py-4 font-bold text-white shadow-md transition-all hover:bg-orange-600 disabled:opacity-70 active:scale-95"
+        >
+          Buy Airtime
+        </button>
+      </div>
+
+      {/* REVIEW MODAL */}
+      {showReview && (
+        <div className="fixed inset-0 z-[150] flex items-end bg-black/50 backdrop-blur-sm">
+          <div className="w-full rounded-t-[28px] bg-white p-5 animate-in slide-in-from-bottom duration-300">
+            <div className="mx-auto mb-5 h-1 w-12 rounded-full bg-gray-200" />
+
+            <div className="mb-4 flex items-center gap-3">
+              <div className="rounded-full bg-orange-100 p-2.5 text-orange-500">
+                <CheckCircle2 size={18} />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-gray-900">
+                  Confirm Purchase
+                </h2>
+                <p className="text-xs text-gray-400">Review before paying</p>
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-gray-50 px-4 overflow-hidden">
+              {[
+                { label: "Network", value: selectedNetwork?.name },
+                { label: "Phone", value: phone },
+                {
+                  label: "Amount",
+                  value: `₦${numericAmount.toLocaleString()}`,
+                },
+                {
+                  label: "1% Cashback",
+                  value: `+₦${cashbackPreview}`,
+                  green: true,
+                },
+              ].map((row, i, arr) => (
+                <div key={i}>
+                  <div className="flex justify-between py-3">
+                    <span className="text-sm text-gray-500">{row.label}</span>
+                    <span
+                      className={`text-sm font-semibold ${(row as any).green ? "text-green-600" : "text-gray-800"}`}
+                    >
+                      {row.value}
+                    </span>
+                  </div>
+                  {i < arr.length - 1 && (
+                    <div className="border-b border-dashed border-gray-200" />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={confirmBuy}
+              disabled={loading}
+              className="mt-4 flex w-full items-center justify-center rounded-2xl bg-orange-500 py-3.5 font-bold text-white transition-all hover:bg-orange-600 disabled:opacity-70"
+            >
+              {loading ? (
+                <Loader2 size={20} className="animate-spin" />
+              ) : (
+                "Confirm & Pay"
+              )}
+            </button>
+
+            <button
+              onClick={() => setShowReview(false)}
+              className="mt-2.5 w-full rounded-2xl bg-gray-100 py-3 text-sm font-semibold text-gray-600"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
