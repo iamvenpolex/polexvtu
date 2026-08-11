@@ -202,7 +202,7 @@ export default function DashboardPage() {
 
             {user && !loading && (
               <Link
-                href="/dashboard/transactionhistory"
+                href="app/transactions"
                 className="inline-flex items-center px-3 py-1 text-xs sm:text-sm bg-orange-600 text-white rounded-full hover:bg-orange-700 transition"
               >
                 History
