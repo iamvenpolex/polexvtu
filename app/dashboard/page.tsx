@@ -20,12 +20,14 @@ import {
   Tv,
   History,
   MoreHorizontal,
+  Copy,
 } from "lucide-react";
 import Link from "next/link";
 
 // ------------------------
 // Types
 // ------------------------
+
 interface User {
   id: number;
   first_name: string;
@@ -35,6 +37,15 @@ interface User {
   email: string;
 }
 
+interface VirtualAccount {
+  customer_id?: string;
+  account_number: string;
+  account_name: string;
+  bank_name: string;
+  bank_code?: string;
+  reserved_account_id?: string;
+}
+
 interface ApiError {
   message: string;
 }
@@ -42,13 +53,15 @@ interface ApiError {
 // ------------------------
 // API Base URL
 // ------------------------
+
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
   "https://polexvtu-backend.onrender.com";
 
 // ------------------------
-// Auth guard helpers
+// Auth helpers
 // ------------------------
+
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("token");
@@ -57,10 +70,8 @@ function getToken(): string | null {
 function isTokenExpired(token: string): boolean {
   try {
     const payload = JSON.parse(atob(token.split(".")[1]));
-    // exp is in seconds; Date.now() is in ms
     return payload.exp * 1000 < Date.now();
   } catch {
-    // malformed token
     return true;
   }
 }
@@ -76,29 +87,49 @@ export default function DashboardPage() {
   // ------------------------
   // States
   // ------------------------
+
   const [authChecked, setAuthChecked] = useState(false);
-  const [showBalance, setShowBalance] = useState(true);
-  const [showReward, setShowReward] = useState(true);
+
+  // Balance is hidden when dashboard first opens
+  const [showBalance, setShowBalance] = useState(false);
+  const [showReward, setShowReward] = useState(false);
+
   const [user, setUser] = useState<User | null>(null);
+
+  const [virtualAccount, setVirtualAccount] = useState<VirtualAccount | null>(
+    null,
+  );
+
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>("");
+  const [accountLoading, setAccountLoading] = useState(true);
+  const [creatingAccount, setCreatingAccount] = useState(false);
+
+  const [error, setError] = useState("");
+  const [accountError, setAccountError] = useState("");
+
   const [firstName, setFirstName] = useState("User");
 
   // ------------------------
-  // Redirect helper
+  // Redirect
   // ------------------------
+
   const redirectToLogin = useCallback(
     (reason?: string) => {
       clearSession();
-      if (reason) console.warn("[Auth]", reason);
+
+      if (reason) {
+        console.warn("[Auth]", reason);
+      }
+
       router.replace("/login");
     },
     [router],
   );
 
   // ------------------------
-  // 1. Auth guard — runs before anything else
+  // Auth guard
   // ------------------------
+
   useEffect(() => {
     const token = getToken();
 
@@ -112,18 +143,17 @@ export default function DashboardPage() {
       return;
     }
 
-    // Token looks valid — allow render
     setFirstName(localStorage.getItem("firstName") || "User");
     setAuthChecked(true);
   }, [redirectToLogin]);
 
   // ------------------------
-  // 2. Fetch user data (only after auth passes)
+  // Fetch user profile
   // ------------------------
+
   const fetchUserData = useCallback(async () => {
     const token = getToken();
 
-    // Re-check token on every fetch (handles mid-session expiry)
     if (!token || isTokenExpired(token)) {
       redirectToLogin("Session expired during fetch");
       return;
@@ -132,8 +162,13 @@ export default function DashboardPage() {
     try {
       const response = await axios.get<User>(
         `${API_BASE_URL}/api/user/profile`,
-        { headers: { Authorization: `Bearer ${token}` } },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
       );
+
       setUser(response.data);
       setError("");
     } catch (err: unknown) {
@@ -141,15 +176,15 @@ export default function DashboardPage() {
         const axiosErr = err as AxiosError<ApiError>;
         const status = axiosErr.response?.status;
 
-        // 401 / 403 → token rejected by server → force logout
         if (status === 401 || status === 403) {
           redirectToLogin("Server rejected token");
           return;
         }
 
-        setError(axiosErr.response?.data?.message || "Failed to fetch data");
-      } else if (err instanceof Error) {
-        setError(err.message);
+        setError(
+          axiosErr.response?.data?.message ||
+            "Failed to fetch wallet information",
+        );
       } else {
         setError("Something went wrong");
       }
@@ -158,25 +193,142 @@ export default function DashboardPage() {
     }
   }, [redirectToLogin]);
 
+  // ------------------------
+  // Fetch virtual account
+  // ------------------------
+
+  const fetchVirtualAccount = useCallback(async () => {
+    const token = getToken();
+
+    if (!token || isTokenExpired(token)) {
+      redirectToLogin("Session expired");
+      return;
+    }
+
+    try {
+      setAccountLoading(true);
+      setAccountError("");
+
+      const response = await axios.get(`${API_BASE_URL}/api/virtual-account`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.data.hasAccount) {
+        setVirtualAccount(response.data.account);
+      } else {
+        setVirtualAccount(null);
+      }
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+
+        if (status === 401 || status === 403) {
+          redirectToLogin("Server rejected token");
+          return;
+        }
+
+        setAccountError(
+          err.response?.data?.message || "Failed to load virtual account",
+        );
+      } else {
+        setAccountError("Failed to load virtual account");
+      }
+    } finally {
+      setAccountLoading(false);
+    }
+  }, [redirectToLogin]);
+
+  // ------------------------
+  // Create virtual account
+  // ------------------------
+
+  const createVirtualAccount = async () => {
+    const token = getToken();
+
+    if (!token || isTokenExpired(token)) {
+      redirectToLogin("Session expired");
+      return;
+    }
+
+    try {
+      setCreatingAccount(true);
+      setAccountError("");
+
+      const response = await axios.post(
+        `${API_BASE_URL}/api/virtual-account/create`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      if (response.data.account) {
+        setVirtualAccount(response.data.account);
+      } else {
+        await fetchVirtualAccount();
+      }
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        setAccountError(
+          err.response?.data?.message || "Unable to create virtual account",
+        );
+      } else {
+        setAccountError("Unable to create virtual account");
+      }
+    } finally {
+      setCreatingAccount(false);
+    }
+  };
+
+  // ------------------------
+  // Copy account number
+  // ------------------------
+
+  const copyAccountNumber = async () => {
+    if (!virtualAccount?.account_number) return;
+
+    try {
+      await navigator.clipboard.writeText(virtualAccount.account_number);
+
+      alert("Account number copied");
+    } catch {
+      console.error("Failed to copy account number");
+    }
+  };
+
+  // ------------------------
+  // Initial fetch
+  // ------------------------
+
   useEffect(() => {
     if (!authChecked) return;
 
     fetchUserData();
+    fetchVirtualAccount();
 
-    // Auto-refresh every 45s — also re-validates token each time
-    const interval = setInterval(fetchUserData, 45000);
+    const interval = setInterval(() => {
+      fetchUserData();
+      fetchVirtualAccount();
+    }, 45000);
+
     return () => clearInterval(interval);
-  }, [authChecked, fetchUserData]);
+  }, [authChecked, fetchUserData, fetchVirtualAccount]);
 
   // ------------------------
-  // 3. Block render until auth is confirmed
-  //    Shows nothing (no flash of content) while redirecting
+  // Auth loading
   // ------------------------
+
   if (!authChecked) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+
           <p className="text-sm text-gray-500">Verifying session…</p>
         </div>
       </div>
@@ -184,16 +336,18 @@ export default function DashboardPage() {
   }
 
   // ------------------------
-  // Render
+  // Dashboard
   // ------------------------
+
   return (
     <div className="min-h-screen bg-gray-100 p-3 sm:p-6">
-      {/* Navbar */}
       <Navbar />
+
       <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6">
         <InfoTicker message="🔥 Special VTU Offer: Get 50% OFF on your first recharge! Limited time only! 🔥" />
 
         {/* ---------------- Wallet Dashboard ---------------- */}
+
         <div className="bg-white rounded-xl shadow-md p-3 sm:p-6 relative">
           <div className="flex items-center justify-between">
             <h1 className="text-base sm:text-xl font-semibold text-orange-600">
@@ -202,7 +356,7 @@ export default function DashboardPage() {
 
             {user && !loading && (
               <Link
-                href="app/transactions"
+                href="/app/transactions"
                 className="inline-flex items-center px-3 py-1 text-xs sm:text-sm bg-orange-600 text-white rounded-full hover:bg-orange-700 transition"
               >
                 History
@@ -210,22 +364,31 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* 🔔 Welcome Popup */}
           <NotificationPopup firstName={firstName} />
 
           {loading && (
             <p className="mt-3 text-gray-500">Loading wallet info...</p>
           )}
+
           {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
 
           {user && !loading && (
             <div className="mt-3 flex items-center justify-between">
+              {/* Wallet Balance */}
+
               <div>
                 <p className="text-gray-500 text-xs sm:text-sm">
                   Wallet Balance
                 </p>
+
                 <h2 className="text-xl sm:text-3xl font-bold text-gray-800 flex items-center gap-2">
-                  {showBalance ? `₦${user.balance.toLocaleString()}` : "****"}
+                  {showBalance
+                    ? `₦${Number(user.balance || 0).toLocaleString("en-NG", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}`
+                    : "****"}
+
                   <button
                     onClick={() => setShowBalance(!showBalance)}
                     className="text-gray-500 hover:text-gray-700"
@@ -235,18 +398,28 @@ export default function DashboardPage() {
                 </h2>
               </div>
 
+              {/* Reward */}
+
               <div className="text-right">
                 <p className="text-gray-500 text-xs sm:text-sm">
                   Reward Balance
                 </p>
+
                 <div className="flex items-center gap-2 text-green-600 font-semibold text-sm sm:text-base">
-                  {showReward ? `₦${user.reward.toLocaleString()}` : "****"}
+                  {showReward
+                    ? `₦${Number(user.reward || 0).toLocaleString("en-NG", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}`
+                    : "₦0.00"}
+
                   <button
                     onClick={() => setShowReward(!showReward)}
                     className="text-gray-500 hover:text-gray-700"
                   >
                     {showReward ? <Eye size={16} /> : <EyeOff size={16} />}
                   </button>
+
                   <Gift size={16} />
                 </div>
               </div>
@@ -254,19 +427,106 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* ---------------- Updates Section ---------------- */}
+        {/* ---------------- Virtual Account ---------------- */}
+
+        <div className="bg-white rounded-xl shadow-md p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h2 className="text-sm sm:text-base font-semibold text-gray-700">
+                Fund Your Wallet
+              </h2>
+
+              <p className="text-xs text-gray-500 mt-1">
+                Transfer money to your personal account number
+              </p>
+            </div>
+          </div>
+
+          {accountLoading && (
+            <p className="text-sm text-gray-500">Checking account...</p>
+          )}
+
+          {!accountLoading && virtualAccount && (
+            <div className="border border-orange-100 bg-orange-50 rounded-xl p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-gray-500">Bank</p>
+
+                  <p className="font-semibold text-gray-800">
+                    {virtualAccount.bank_name}
+                  </p>
+                </div>
+
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                  Active
+                </span>
+              </div>
+
+              <div className="mt-4">
+                <p className="text-xs text-gray-500">Account Number</p>
+
+                <div className="flex items-center gap-2">
+                  <p className="text-2xl font-bold text-gray-800 tracking-wide">
+                    {virtualAccount.account_number}
+                  </p>
+
+                  <button
+                    onClick={copyAccountNumber}
+                    className="p-2 rounded-lg hover:bg-orange-100 text-orange-600"
+                    title="Copy account number"
+                  >
+                    <Copy size={18} />
+                  </button>
+                </div>
+
+                <p className="text-sm text-gray-600 mt-1">
+                  {virtualAccount.account_name}
+                </p>
+              </div>
+
+              <p className="text-xs text-gray-500 mt-3">
+                Transfer to this account to fund your TapAm wallet.
+              </p>
+            </div>
+          )}
+
+          {!accountLoading && !virtualAccount && (
+            <div className="text-center border border-dashed border-gray-300 rounded-xl p-5">
+              <p className="text-sm text-gray-600 mb-3">
+                You don&apos;t have a personal account number yet.
+              </p>
+
+              <button
+                onClick={createVirtualAccount}
+                disabled={creatingAccount}
+                className="bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white font-semibold px-5 py-2.5 rounded-lg shadow transition"
+              >
+                {creatingAccount ? "Creating Account..." : "Create Account"}
+              </button>
+            </div>
+          )}
+
+          {accountError && (
+            <p className="text-red-500 text-sm mt-3">{accountError}</p>
+          )}
+        </div>
+
+        {/* ---------------- Updates ---------------- */}
+
         <div className="bg-white rounded-xl shadow-md p-2 sm:p-4">
           <p className="text-xs sm:text-sm text-gray-700">
             📢 Latest Update: New discounts available on MTN data bundles!
           </p>
         </div>
 
-        {/* ---------------- Fund Wallet Section ---------------- */}
+        {/* ---------------- Fund Wallet ---------------- */}
+
         <div className="bg-white rounded-xl shadow-md p-3 sm:p-6">
           <h2 className="text-sm sm:text-base font-semibold text-gray-700 mb-2">
             Fund Wallet
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols- gap-3 sm:gap-4">
+
+          <div className="grid grid-cols-1 gap-3 sm:gap-4">
             <Link
               href="/dashboard/wallet/fund"
               className="flex flex-col items-center justify-center gap-1 sm:gap-2 bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow text-xs sm:text-sm"
@@ -277,11 +537,13 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* ---------------- Withdraw / Reward Section ---------------- */}
+        {/* ---------------- Withdraw / Reward ---------------- */}
+
         <div className="bg-white rounded-xl shadow-md p-3 sm:p-6">
           <h2 className="text-sm sm:text-base font-semibold text-gray-700 mb-2">
             Withdraw / Reward
           </h2>
+
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
             <Link
               href="/dashboard/wallet/withdraw/wallet-tapam"
@@ -301,7 +563,7 @@ export default function DashboardPage() {
 
             <Link
               href="/dashboard/tapamhistory"
-              className="flex items-center justify-center gap-1 sm:gap-2 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow text-xs sm:text-sm col-span-2 sm:col-span-1 sm:justify-center"
+              className="flex items-center justify-center gap-1 sm:gap-2 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow text-xs sm:text-sm col-span-2 sm:col-span-1"
             >
               <History size={18} />
               View History
@@ -309,11 +571,13 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* ---------------- Services Section ---------------- */}
+        {/* ---------------- Services ---------------- */}
+
         <div className="bg-white rounded-xl shadow-md p-3 sm:p-6 space-y-4">
           <h2 className="text-sm sm:text-base font-semibold text-gray-700">
             Services
           </h2>
+
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <Link
               href="/dashboard/airtime"
@@ -322,6 +586,7 @@ export default function DashboardPage() {
               <PhoneCall className="w-5 h-5 sm:w-6 sm:h-6" />
               Airtime
             </Link>
+
             <Link
               href="/dashboard/data"
               className="flex flex-col items-center gap-1 sm:gap-2 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow transition text-xs sm:text-sm"
@@ -329,6 +594,7 @@ export default function DashboardPage() {
               <Wifi className="w-5 h-5 sm:w-6 sm:h-6" />
               Data
             </Link>
+
             <Link
               href="/dashboard/electricity"
               className="flex flex-col items-center gap-1 sm:gap-2 bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow transition text-xs sm:text-sm"
@@ -336,6 +602,7 @@ export default function DashboardPage() {
               <Lightbulb className="w-5 h-5 sm:w-6 sm:h-6" />
               Electricity
             </Link>
+
             <Link
               href="/dashboard/education"
               className="flex flex-col items-center gap-1 sm:gap-2 bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow transition text-xs sm:text-sm"
@@ -343,6 +610,7 @@ export default function DashboardPage() {
               <GraduationCap className="w-5 h-5 sm:w-6 sm:h-6" />
               Education
             </Link>
+
             <Link
               href="/dashboard/cabletv"
               className="flex flex-col items-center gap-1 sm:gap-2 bg-pink-500 hover:bg-pink-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow transition text-xs sm:text-sm"
@@ -361,13 +629,16 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* ADS BANNER */}
+        {/* ---------------- ADS BANNER ---------------- */}
+
         <div className="relative overflow-hidden rounded-2xl border border-orange-200 bg-gradient-to-br from-yellow-50 via-orange-100 to-yellow-100 shadow-xl my-6">
           <div className="absolute -top-10 -left-10 h-32 w-32 bg-orange-300/30 blur-3xl rounded-full" />
           <div className="absolute -bottom-10 -right-10 h-32 w-32 bg-yellow-300/30 blur-3xl rounded-full" />
+
           <div className="absolute top-3 left-4 text-2xl animate-bounce">
             🔥
           </div>
+
           <div className="absolute bottom-3 right-4 text-2xl animate-pulse">
             ⚡
           </div>
@@ -376,18 +647,22 @@ export default function DashboardPage() {
             <div className="inline-flex items-center gap-2 bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md mb-3">
               LIMITED OFFER
             </div>
+
             <h2 className="text-xl md:text-2xl font-extrabold text-orange-800 leading-tight">
               Get <span className="text-red-600">50% OFF</span> Your First
               Recharge
             </h2>
+
             <p className="text-sm text-orange-700 mt-2">
               Fast VTU services for airtime, data & bills — anytime, anywhere.
             </p>
+
             <button className="mt-4 bg-orange-600 hover:bg-orange-700 text-white font-semibold px-5 py-2 rounded-full shadow-lg transition active:scale-95">
               Recharge Now
             </button>
+
             <p className="text-[11px] text-orange-600 mt-3 opacity-80">
-              ⏳ Offer ends soon — don&#39;t miss out!
+              ⏳ Offer ends soon — don&apos;t miss out!
             </p>
           </div>
         </div>
