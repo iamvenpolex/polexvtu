@@ -356,7 +356,7 @@ export default function DashboardPage() {
 
             {user && !loading && (
               <Link
-                href="app/transactions"
+                href="/transactions"
                 className="inline-flex items-center px-3 py-1 text-xs sm:text-sm bg-orange-600 text-white rounded-full hover:bg-orange-700 transition"
               >
                 History
@@ -527,14 +527,6 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* ---------------- Updates ---------------- */}
-
-        <div className="bg-white rounded-xl shadow-md p-2 sm:p-4">
-          <p className="text-xs sm:text-sm text-gray-700">
-            📢 Latest Update: New discounts available on MTN data bundles!
-          </p>
-        </div>
-
         {/* ---------------- Compact Fund Wallet ---------------- */}
 
         <div className="bg-white rounded-xl shadow-md px-4 py-3">
@@ -548,7 +540,7 @@ export default function DashboardPage() {
               </Link>
 
               <Link
-                href="app/transactions"
+                href="/transactions"
                 className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-gray-600 hover:text-gray-800 border border-gray-200 rounded-lg px-3 py-2"
               >
                 <History size={15} />
@@ -556,6 +548,14 @@ export default function DashboardPage() {
               </Link>
             </div>
           </div>
+        </div>
+
+        {/* ---------------- Updates ---------------- */}
+
+        <div className="bg-white rounded-xl shadow-md p-2 sm:p-4">
+          <p className="text-xs sm:text-sm text-gray-700">
+            📢 Latest Update: New discounts available on MTN data bundles!
+          </p>
         </div>
 
         {/* ---------------- Withdraw / Reward ---------------- */}
@@ -583,7 +583,7 @@ export default function DashboardPage() {
             </Link>
 
             <Link
-              href="app/transactions"
+              href="/transactions"
               className="flex items-center justify-center gap-1 sm:gap-2 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow text-xs sm:text-sm col-span-2 sm:col-span-1"
             >
               <History size={18} />
