@@ -487,6 +487,22 @@ export default function DashboardPage() {
               <p className="text-xs text-gray-500 mt-3">
                 Transfer to this account to fund your TapAm wallet.
               </p>
+
+              {/* PaymentPoint Service Fee Notice */}
+
+              <div className="mt-3 rounded-lg border border-orange-200 bg-orange-100 px-3 py-2.5">
+                <p className="text-xs text-orange-800 leading-relaxed">
+                  <strong>Service fee:</strong> Transfers made to this personal
+                  account number via PaymentPoint attract a{" "}
+                  <strong>0.5% service fee</strong>. The fee will be deducted
+                  from the amount credited to your TapAm wallet.
+                </p>
+
+                <p className="text-[11px] text-orange-700 mt-1.5">
+                  Example: A ₦10,000 transfer will credit ₦9,950 to your wallet
+                  after the ₦50 service fee.
+                </p>
+              </div>
             </div>
           )}
 
@@ -519,21 +535,42 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* ---------------- Fund Wallet ---------------- */}
+        {/* ---------------- Compact Fund Wallet ---------------- */}
 
-        <div className="bg-white rounded-xl shadow-md p-3 sm:p-6">
-          <h2 className="text-sm sm:text-base font-semibold text-gray-700 mb-2">
-            Fund Wallet
-          </h2>
+        <div className="bg-white rounded-xl shadow-md px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
+                <Wallet size={19} />
+              </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:gap-4">
-            <Link
-              href="/dashboard/wallet/fund"
-              className="flex flex-col items-center justify-center gap-1 sm:gap-2 bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow text-xs sm:text-sm"
-            >
-              <Wallet size={18} />
-              Fund Wallet
-            </Link>
+              <div className="min-w-0">
+                <h2 className="text-sm font-semibold text-gray-700">
+                  Fund Wallet
+                </h2>
+
+                <p className="text-xs text-gray-500 truncate">
+                  Add money instantly with Paystack
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <Link
+                href="/dashboard/wallet/fund"
+                className="text-xs sm:text-sm font-semibold text-orange-600 hover:text-orange-700 px-2 py-1"
+              >
+                Fund via Paystack
+              </Link>
+
+              <Link
+                href="/app/transactions"
+                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-gray-600 hover:text-gray-800 border border-gray-200 rounded-lg px-3 py-2"
+              >
+                <History size={15} />
+                History
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -562,7 +599,7 @@ export default function DashboardPage() {
             </Link>
 
             <Link
-              href="/dashboard/tapamhistory"
+              href="/app/transactions"
               className="flex items-center justify-center gap-1 sm:gap-2 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow text-xs sm:text-sm col-span-2 sm:col-span-1"
             >
               <History size={18} />
@@ -633,6 +670,7 @@ export default function DashboardPage() {
 
         <div className="relative overflow-hidden rounded-2xl border border-orange-200 bg-gradient-to-br from-yellow-50 via-orange-100 to-yellow-100 shadow-xl my-6">
           <div className="absolute -top-10 -left-10 h-32 w-32 bg-orange-300/30 blur-3xl rounded-full" />
+
           <div className="absolute -bottom-10 -right-10 h-32 w-32 bg-yellow-300/30 blur-3xl rounded-full" />
 
           <div className="absolute top-3 left-4 text-2xl animate-bounce">
