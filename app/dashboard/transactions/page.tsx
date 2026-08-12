@@ -424,7 +424,7 @@ export default function TransactionPage() {
                   </button>
 
                   <Link
-                    href={`dashboard/transactions/receipt/${encodeURIComponent(
+                    href={`/dashboard/transactions/receipt/${encodeURIComponent(
                       tx.reference,
                     )}`}
                     className="flex items-center gap-1 text-sm text-orange-600 font-semibold hover:text-orange-700 shrink-0"
