@@ -356,7 +356,7 @@ export default function DashboardPage() {
 
             {user && !loading && (
               <Link
-                href="/transactions"
+                href="/dashboard/transactions"
                 className="inline-flex items-center px-3 py-1 text-xs sm:text-sm bg-orange-600 text-white rounded-full hover:bg-orange-700 transition"
               >
                 History
@@ -540,7 +540,7 @@ export default function DashboardPage() {
               </Link>
 
               <Link
-                href="/transactions"
+                href="/dashboard/transactions"
                 className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-gray-600 hover:text-gray-800 border border-gray-200 rounded-lg px-3 py-2"
               >
                 <History size={15} />
@@ -583,7 +583,7 @@ export default function DashboardPage() {
             </Link>
 
             <Link
-              href="/transactions"
+              href="/dashboard/transactions"
               className="flex items-center justify-center gap-1 sm:gap-2 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow text-xs sm:text-sm col-span-2 sm:col-span-1"
             >
               <History size={18} />
