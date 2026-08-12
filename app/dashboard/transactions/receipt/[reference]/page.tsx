@@ -274,7 +274,7 @@ export default function ReceiptPage() {
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200">
         <div className="max-w-2xl mx-auto flex items-center gap-3 px-4 py-4">
           <Link
-            href="/transactions"
+            href="/dashboard/transactions"
             className="flex items-center justify-center w-10 h-10 rounded-full bg-orange-100 text-orange-600"
           >
             <ArrowLeft size={18} />
@@ -528,7 +528,7 @@ export default function ReceiptPage() {
 
         {/* BACK BUTTON */}
         <Link
-          href="/transactions"
+          href="/dashboard/transactions"
           className="flex items-center justify-center gap-2 w-full mt-4 bg-orange-500 hover:bg-orange-600 text-white py-3.5 rounded-2xl font-semibold transition"
         >
           <ArrowLeft size={18} />
