@@ -249,7 +249,7 @@ export default function AirtimePage() {
     if (numericAmount < MIN_AMOUNT) {
       setMessage({
         type: "error",
-        text: "Minimum airtime amount is ₦50",
+        text: "Minimum airtime amount is ₦100",
       });
 
       return false;
