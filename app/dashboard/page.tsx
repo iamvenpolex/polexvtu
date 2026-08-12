@@ -356,7 +356,7 @@ export default function DashboardPage() {
 
             {user && !loading && (
               <Link
-                href="/app/transactions"
+                href="app/transactions"
                 className="inline-flex items-center px-3 py-1 text-xs sm:text-sm bg-orange-600 text-white rounded-full hover:bg-orange-700 transition"
               >
                 History
@@ -539,22 +539,6 @@ export default function DashboardPage() {
 
         <div className="bg-white rounded-xl shadow-md px-4 py-3">
           <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
-                <Wallet size={19} />
-              </div>
-
-              <div className="min-w-0">
-                <h2 className="text-sm font-semibold text-gray-700">
-                  Fund Wallet
-                </h2>
-
-                <p className="text-xs text-gray-500 truncate">
-                  Add money instantly with Paystack
-                </p>
-              </div>
-            </div>
-
             <div className="flex items-center gap-2 shrink-0">
               <Link
                 href="/dashboard/wallet/fund"
@@ -564,7 +548,7 @@ export default function DashboardPage() {
               </Link>
 
               <Link
-                href="/app/transactions"
+                href="app/transactions"
                 className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-gray-600 hover:text-gray-800 border border-gray-200 rounded-lg px-3 py-2"
               >
                 <History size={15} />
@@ -599,7 +583,7 @@ export default function DashboardPage() {
             </Link>
 
             <Link
-              href="/app/transactions"
+              href="app/transactions"
               className="flex items-center justify-center gap-1 sm:gap-2 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 sm:py-4 rounded-lg shadow text-xs sm:text-sm col-span-2 sm:col-span-1"
             >
               <History size={18} />
