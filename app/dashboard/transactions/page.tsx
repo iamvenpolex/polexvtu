@@ -186,6 +186,10 @@ export default function TransactionPage() {
       return "Bill Payment";
     }
 
+    if (type.includes("purchase")) {
+      return "Purchase";
+    }
+
     return tx.type ? tx.type.replace(/[-_]/g, " ") : "Transaction";
   };
 
@@ -196,7 +200,6 @@ export default function TransactionPage() {
 
   const currentTransactions = useMemo(() => {
     const indexOfLast = currentPage * TRANSACTIONS_PER_PAGE;
-
     const indexOfFirst = indexOfLast - TRANSACTIONS_PER_PAGE;
 
     return transactions.slice(indexOfFirst, indexOfLast);
@@ -336,9 +339,27 @@ export default function TransactionPage() {
           currentTransactions.map((tx) => {
             const status = getStatusStyles(tx.status);
 
+            const transactionType = tx.type?.toLowerCase().trim() || "";
+
+            /*
+             * IMPORTANT:
+             *
+             * Purchase = ALWAYS RED / NEGATIVE
+             * Cashback = ALWAYS GREEN / POSITIVE
+             * Other credits = GREEN / POSITIVE
+             * Other debits = RED / NEGATIVE
+             */
+
             const isCashback =
-              tx.type?.toLowerCase() === "cashback" ||
-              tx.type?.toLowerCase().includes("cashback");
+              transactionType === "cashback" ||
+              transactionType.includes("cashback");
+
+            const isPurchase =
+              transactionType === "purchase" ||
+              transactionType.includes("purchase");
+
+            // Purchase always takes priority over isCredit.
+            const isCredit = !isPurchase && (tx.isCredit || isCashback);
 
             return (
               <div
@@ -348,18 +369,15 @@ export default function TransactionPage() {
                 {/* TOP */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex gap-3 min-w-0">
+                    {/* TRANSACTION ICON */}
                     <div
                       className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
-                        tx.isCredit || isCashback
+                        isCredit
                           ? "bg-green-100 text-green-600"
-                          : "bg-orange-100 text-orange-600"
+                          : "bg-red-100 text-red-600"
                       }`}
                     >
-                      {isCashback ? (
-                        <Receipt size={22} />
-                      ) : (
-                        <Receipt size={22} />
-                      )}
+                      <Receipt size={22} />
                     </div>
 
                     <div className="min-w-0">
@@ -383,12 +401,10 @@ export default function TransactionPage() {
                   <div className="text-right shrink-0">
                     <p
                       className={`font-bold text-base ${
-                        tx.isCredit || isCashback
-                          ? "text-green-600"
-                          : "text-red-600"
+                        isCredit ? "text-green-600" : "text-red-600"
                       }`}
                     >
-                      {tx.isCredit || isCashback ? "+" : "-"}
+                      {isCredit ? "+" : "-"}
                       {formatCurrency(tx.amount)}
                     </p>
 
