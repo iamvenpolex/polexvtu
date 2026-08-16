@@ -118,7 +118,7 @@ export default function LoginPage() {
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="email"
-                  placeholder="Email or Phone"
+                  placeholder="Email"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   required

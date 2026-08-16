@@ -95,7 +95,7 @@ const NETWORKS: Network[] = [
 
 const QUICK_AMOUNTS = [100, 200, 500, 1000, 2000, 5000];
 
-const MIN_AMOUNT = 50;
+const MIN_AMOUNT = 100;
 const MAX_AMOUNT = 50000;
 const CASHBACK_RATE = 0.01;
 
